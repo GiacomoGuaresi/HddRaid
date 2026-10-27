@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Icona di HddRaid: due dischi esterni uguali, uno sopra l'altro, con il
+       LED verde acceso. Il disco è lo stesso disegno di Disks.svelte. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22b5aa"/>
+      <stop offset="1" stop-color="#0f5f59"/>
+    </linearGradient>
+    <path id="disk" d="M45 322 L180 212 Q225 178 280 178 H520 Q575 178 620 212 L755 322 Q800 360 800 420 V510 Q800 620 690 620 H110 Q0 620 0 510 V420 Q0 360 45 322 Z"/>
+    <!-- Stacca il disco sotto da quello sopra con una sottile fessura. -->
+    <mask id="gap" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <use href="#disk" transform="translate(232 120) scale(0.7)" fill="#000" stroke="#000" stroke-width="40"/>
+    </mask>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#bg)"/>
+  <ellipse cx="512" cy="784" rx="300" ry="26" fill="#071b19" opacity="0.3"/>
+  <!-- Disco sotto -->
+  <g mask="url(#gap)">
+  <g transform="translate(232 360) scale(0.7)">
+    <use href="#disk" fill="#e6ded3"/>
+    <rect x="65" y="360" width="670" height="196" rx="45" fill="#d3c8ba"/>
+    <circle cx="510" cy="462" r="36" fill="#8a8279"/>
+    <circle cx="632" cy="462" r="36" fill="#5cc27f"/>
+  </g>
+  </g>
+  <!-- Disco sopra -->
+  <g transform="translate(232 120) scale(0.7)">
+    <use href="#disk" fill="#fbf8f4"/>
+    <rect x="65" y="360" width="670" height="196" rx="45" fill="#e6ded3"/>
+    <circle cx="510" cy="462" r="36" fill="#8a8279"/>
+    <circle cx="632" cy="462" r="36" fill="#5cc27f"/>
+  </g>
+</svg>
