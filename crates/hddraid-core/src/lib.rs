@@ -2,6 +2,7 @@
 //!
 //! Non dipende dall'interfaccia: l'app Tauri si limita a chiamarlo.
 
+pub mod archive;
 pub mod copy;
 pub mod disk;
 pub mod error;
@@ -11,6 +12,7 @@ pub mod index;
 pub mod paths;
 pub mod scan;
 
+pub use archive::{Archive, Side};
 pub use disk::Disk;
 pub use error::{Error, Result};
 

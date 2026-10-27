@@ -35,7 +35,7 @@ Legenda: ⬜ da fare · 🔄 in corso · ✅ fatto
 | 1.3 | **Scanner**: esclusioni, NFC, maiuscole, tolleranza sulle date | `feat(core): scanner` | ✅ |
 | 1.4 | **Hash** SHA-256 in streaming | `feat(core): hashing` | ✅ |
 | 1.5 | **Copia sicura**: `.hddraid-partial` → `fsync` → verifica → rinomina | `feat(core): safe copy` | ✅ |
-| 1.6 | **CLI di debug**: `init`, `scan`, `status` | `feat(cli): debug commands` | ⬜ |
+| 1.6 | **CLI di debug**: `init`, `scan`, `status` | `feat(cli): debug commands` | ✅ |
 
 ## M2 — Sincronizzazione (senza UI) → `v0.2.0`
 

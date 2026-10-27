@@ -28,6 +28,12 @@ pub enum Error {
     #[error("{} non è un indice HddRaid valido", .0.display())]
     IndexInvalid(PathBuf),
 
+    #[error("i due dischi appartengono a coppie diverse")]
+    DifferentArchives,
+
+    #[error("è stato indicato due volte lo stesso disco")]
+    SameDisk,
+
     #[error("{} è cambiato durante l'operazione", .0.display())]
     SourceChanged(PathBuf),
 

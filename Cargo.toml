@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/hddraid-core", "crates/hddraid-devtools", "app/src-tauri"]
+members = ["crates/hddraid-core", "crates/hddraid-devtools", "crates/hddraid-cli", "app/src-tauri"]
 
 [workspace.package]
 version = "0.1.0"

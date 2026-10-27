@@ -12,6 +12,7 @@
 ```
 crates/hddraid-core/      motore, senza UI
 crates/hddraid-devtools/  dischi simulati
+crates/hddraid-cli/       CLI di debug del motore (`hddraid`)
 app/                      app Tauri 2 + SvelteKit
 app/src-tauri/            parte Rust dell'app
 ```
@@ -51,3 +52,15 @@ cargo run -p hddraid-devtools --bin dev-disks -- break <scenario>
 | `all` | tutti insieme |
 
 Gli stessi dischi si usano nei test, tramite la libreria `hddraid-devtools`.
+
+## CLI di debug
+
+Prova il motore sui dischi simulati, senza interfaccia. La copia locale
+dell'indice va in `$HDDRAID_WORK` (di default nella cartella temporanea).
+
+```sh
+export HDDRAID_WORK=$PWD/dev-disks/work
+cargo run -p hddraid-cli -- init dev-disks/disk-a dev-disks/disk-b
+cargo run -p hddraid-cli -- status dev-disks/disk-a dev-disks/disk-b
+cargo run -p hddraid-cli -- scan dev-disks/disk-a
+```

@@ -1,0 +1,17 @@
+[package]
+name = "hddraid-cli"
+description = "CLI di debug per il motore di HddRaid"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "hddraid"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.6.7", features = ["derive", "env"] }
+hddraid-core = { path = "../hddraid-core" }

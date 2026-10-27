@@ -180,6 +180,14 @@ impl Index {
         Ok(index)
     }
 
+    /// Copia l'indice `src` (aperto in sola lettura) in `dest` e apre la copia.
+    pub fn copy_from(src: &Path, dest: &Path) -> Result<Index> {
+        Index::open(src)?;
+        let conn = Connection::open_with_flags(src, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+        Index { conn }.save_to(dest)?;
+        Index::open(dest)
+    }
+
     /// Legge `archive_id` e `revision` di un indice senza modificarlo, per
     /// scegliere il più recente tra quelli dei due dischi.
     pub fn peek(path: &Path) -> Result<(String, u64)> {
