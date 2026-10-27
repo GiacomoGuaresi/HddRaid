@@ -22,7 +22,7 @@ Legenda: ⬜ da fare · 🔄 in corso · ✅ fatto
 | # | Step | Commit | Stato |
 |---|---|---|---|
 | 0.1 | `git init`, `README.md`, `LICENSE`, `.gitignore`, `doc/` | `first commit` | ⬜✅ |
-| 0.2 | Workspace Cargo: crate `hddraid-core`, app Tauri 2 + Svelte vuota | `chore: project skeleton` | ⬜ |
+| 0.2 | Workspace Cargo: crate `hddraid-core`, app Tauri 2 + Svelte vuota | `chore: project skeleton` | ✅ |
 | 0.3 | CI: lint e test su Windows, macOS e Linux | `ci: lint and test` | ⬜ |
 | 0.4 | Generatore di dischi simulati per sviluppo e test | `chore(dev): simulated disks` | ⬜ |
 

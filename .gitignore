@@ -1,13 +1,7 @@
 # Rust
 /target/
 
-# Node
-node_modules/
-/app/build/
-/app/.svelte-kit/
-
 # Tauri
-/app/src-tauri/target/
 /app/src-tauri/gen/
 
 # Dischi simulati
