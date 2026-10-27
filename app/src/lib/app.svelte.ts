@@ -3,7 +3,7 @@
 
 import { backend, inTauri, type Backend } from "./api";
 import { setLanguage } from "./i18n/index.svelte";
-import type { Answer, State } from "./types";
+import type { Answer, Settings, State } from "./types";
 
 export type View = "home" | "questions" | "history";
 
@@ -40,10 +40,18 @@ export function api(): Backend {
   return instance;
 }
 
+/** Tema chiaro o scuro forzato; `null` segue il sistema. */
+export function setTheme(theme: Settings["theme"]) {
+  if (theme) document.documentElement.dataset.theme = theme;
+  else delete document.documentElement.dataset.theme;
+}
+
 export async function start() {
   const api = await backend();
   instance = api;
-  setLanguage((await api.settings()).language);
+  const settings = await api.settings();
+  setLanguage(settings.language);
+  setTheme(settings.theme);
   await api.subscribe((s) => {
     // Le domande cambiano solo con un nuovo confronto: le risposte date a
     // file che non sono più in discussione si dimenticano.

@@ -3,7 +3,7 @@
   dei dischi si cambiano dal popup di ciascun disco.
 -->
 <script lang="ts">
-  import { api, app } from "$lib/app.svelte";
+  import { api, app, setTheme } from "$lib/app.svelte";
   import Popup from "$lib/components/Popup.svelte";
   import { ChevronRight, History, Settings as Gear } from "$lib/components/icons";
   import { setLanguage, t } from "$lib/i18n/index.svelte";
@@ -27,6 +27,7 @@
     if (!settings) return;
     settings = { ...settings, ...patch };
     if ("language" in patch) setLanguage(settings.language);
+    if ("theme" in patch) setTheme(settings.theme);
     await api().setSettings($state.snapshot(settings));
   }
 
@@ -76,6 +77,17 @@
           <option value="">{t("settings.languageAuto")}</option>
           <option value="it">Italiano</option>
           <option value="en">English</option>
+        </select>
+      </div>
+      <div class="row">
+        <span>{t("settings.theme")}</span>
+        <select
+          value={settings.theme ?? ""}
+          onchange={(e) => save({ theme: (e.currentTarget.value || null) as Settings["theme"] })}
+        >
+          <option value="">{t("settings.themeAuto")}</option>
+          <option value="light">{t("settings.themeLight")}</option>
+          <option value="dark">{t("settings.themeDark")}</option>
         </select>
       </div>
     </div>

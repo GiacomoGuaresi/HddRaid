@@ -1,12 +1,12 @@
 <!-- Stato dei dischi: nessuno, uno, confronto in corso, entrambi collegati. -->
 <script lang="ts">
   import { inTauri } from "$lib/api";
-  import { api, app, label } from "$lib/app.svelte";
+  import { api, app, label, other } from "$lib/app.svelte";
   import Button from "$lib/components/Button.svelte";
   import DiskPopup from "$lib/components/DiskPopup.svelte";
   import Disks from "$lib/components/Disks.svelte";
   import Screen from "$lib/components/Screen.svelte";
-  import { Eject, HeartPulse, RefreshCw } from "$lib/components/icons";
+  import { Eject, HeartPulse, RefreshCw, ScanSearch } from "$lib/components/icons";
   import { relative } from "$lib/format";
   import { t } from "$lib/i18n/index.svelte";
   import type { Side, VolumeView } from "$lib/types";
@@ -22,21 +22,28 @@
   const missing = $derived(present === "A" ? "B" : "A");
   /** Confrontati e senza niente da fare. */
   const same = $derived(name === "connected" && s.compared);
+  /** I dischi scelti dal popup per i posti liberi, per cartella. */
+  let picks = $state<Partial<Record<Side, string>>>({});
   /** Gli altri dischi collegati (nuovi o di un'altra coppia) prendono il
-   *  posto di quelli che mancano, nell'ordine. */
+   *  posto di quelli che mancano: prima quelli scelti, poi nell'ordine. */
   const extras = $derived.by(() => {
     const slots: Partial<Record<Side, VolumeView>> = {};
     if (name !== "noDisks" && name !== "oneDisk") return slots;
     const free = (["A", "B"] as Side[]).filter((x) => !s.disks[x]);
-    s.others.forEach((volume, i) => {
-      if (free[i]) slots[free[i]] = volume;
-    });
+    const left = [...s.others];
+    for (const side of free) {
+      const i = left.findIndex((v) => v.root === picks[side]);
+      if (i >= 0) slots[side] = left.splice(i, 1)[0];
+    }
+    for (const side of free) {
+      if (!slots[side] && left.length) slots[side] = left.shift();
+    }
     return slots;
   });
   /** Il primo disco in più, che dà il titolo alla schermata. */
   const extra = $derived(extras.A ?? extras.B ?? null);
 
-  type Target = { kind: "pair"; side: Side } | { kind: "volume"; volume: VolumeView };
+  type Target = { kind: "pair"; side: Side } | { kind: "volume"; side: Side; volume: VolumeView };
   let selected = $state<Target | null>(null);
 
   // Demo nel browser: `&disk=A` apre subito le informazioni di un disco.
@@ -48,7 +55,19 @@
   function select(side: Side) {
     const volume = extras[side];
     if (s.disks[side]) selected = { kind: "pair", side };
-    else if (volume) selected = { kind: "volume", volume };
+    else if (volume) selected = { kind: "volume", side, volume };
+  }
+
+  /** Mette il disco `root` al posto `side`; se era nell'altro posto, i due
+   *  si scambiano. */
+  function pick(side: Side, root: string) {
+    const current = extras[side];
+    const next = { ...picks, [side]: root };
+    if (extras[other(side)]?.root === root && current) next[other(side)] = current.root;
+    else if (next[other(side)] === root) delete next[other(side)];
+    picks = next;
+    const volume = s.others.find((v) => v.root === root);
+    if (volume) selected = { kind: "volume", side, volume };
   }
 
   function diskState(side: Side) {
@@ -126,12 +145,22 @@
         <RefreshCw size={20} strokeWidth={2.5} />
         {t("summary.sync")}
       </Button>
+    {:else if name === "noDisks" || name === "oneDisk"}
+      <Button variant="secondary" onclick={() => api().rescan()}>
+        <ScanSearch size={18} />
+        {t("status.rescan")}
+      </Button>
     {/if}
   {/snippet}
 </Screen>
 
 {#if selected}
-  <DiskPopup target={selected} onclose={() => (selected = null)} />
+  <DiskPopup
+    target={selected}
+    partner={selected.kind === "volume" ? (extras[other(selected.side)] ?? null) : null}
+    onpick={(root) => selected && pick(selected.side, root)}
+    onclose={() => (selected = null)}
+  />
 {/if}
 
 <style>

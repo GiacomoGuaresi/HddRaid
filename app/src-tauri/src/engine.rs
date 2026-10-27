@@ -6,7 +6,7 @@
 //! copia di lavoro dell'indice non viene mai aperta due volte.
 
 use std::collections::{BTreeMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
@@ -47,14 +47,19 @@ pub enum Cmd {
     Dismiss,
     Rename(Side, String),
     /// Formatta il volume `root`; con `side` lo mette nella coppia al posto
-    /// di quel disco, altrimenti resta un disco vuoto qualsiasi.
+    /// di quel disco, altrimenti resta un disco vuoto qualsiasi. Con
+    /// `partner`, senza una coppia, ne crea una nuova con quel volume, e
+    /// `side` è il lato del disco formattato.
     Format {
         root: PathBuf,
         side: Option<Side>,
         label: String,
+        partner: Option<PathBuf>,
     },
     /// Le impostazioni sono cambiate (lingua, intervallo dei controlli).
     Settings,
+    /// Cerca di nuovo i dischi, montando anche quelli espulsi.
+    Rescan,
 }
 
 /// Ciò che i comandi Tauri condividono con il thread.
@@ -134,6 +139,7 @@ pub fn start(app: AppHandle, config_dir: PathBuf, work_dir: PathBuf) -> Arc<Shar
         repairs: Vec::new(),
         present: [None, None],
         ejected: HashSet::new(),
+        devices: HashSet::new(),
         volumes: BTreeMap::new(),
         quiet: false,
     };
@@ -163,6 +169,9 @@ struct Engine {
     present: [Option<String>; 2],
     /// Volumi espulsi: si ignorano finché restano montati.
     ejected: HashSet<PathBuf>,
+    /// Partizioni dei dischi rimovibili già viste: si montano da sole solo
+    /// quando compaiono, così un disco espulso resta espulso.
+    devices: HashSet<String>,
     /// Nome, file system e spazio dei volumi, letti una volta per volume.
     volumes: BTreeMap<PathBuf, (volumes::VolumeInfo, (u64, u64))>,
     /// Il prossimo collegamento è dovuto a una rinomina o a una
@@ -196,7 +205,18 @@ impl Engine {
             Cmd::Repair => self.repair(),
             Cmd::Dismiss => self.set(|s| s.outcome = None),
             Cmd::Rename(side, label) => self.rename(side, &label),
-            Cmd::Format { root, side, label } => self.format(&root, side, &label),
+            Cmd::Format {
+                root,
+                side,
+                label,
+                partner,
+            } => match (side, partner) {
+                (Some(side), Some(partner)) => {
+                    self.format_plain(&root, &label, Some((&partner, side)))
+                }
+                (side, _) => self.format(&root, side, &label),
+            },
+            Cmd::Rescan => self.rescan(),
             Cmd::Settings => {
                 let due = self.check_due();
                 self.set(|s| s.check_due = due);
@@ -252,6 +272,7 @@ impl Engine {
             // scollegati.
             return;
         }
+        self.mount_new();
         let roots = volumes::mounted();
         self.ejected.retain(|r| roots.contains(r));
         let disks: Vec<Disk> = roots
@@ -340,6 +361,34 @@ impl Engine {
             }
             _ => {}
         }
+    }
+
+    /// Monta le partizioni dei dischi rimovibili appena collegati, dove il
+    /// sistema non lo fa da solo.
+    fn mount_new(&mut self) {
+        let devices = volumes::removable();
+        self.devices
+            .retain(|d| devices.iter().any(|r| &r.device == d));
+        for removable in devices {
+            if !self.devices.insert(removable.device.clone()) || removable.mounted {
+                continue;
+            }
+            match volumes::mount(&removable.device) {
+                Ok(root) => log::info!("{} montato in {}", removable.device, root.display()),
+                Err(e) => log::warn!("{} non montato: {e}", removable.device),
+            }
+        }
+    }
+
+    /// "Cerca i dischi": come se tutti i dischi fossero appena stati
+    /// collegati, anche quelli espulsi.
+    fn rescan(&mut self) {
+        if self.busy() {
+            return;
+        }
+        self.devices.clear();
+        self.ejected.clear();
+        self.reconnect();
     }
 
     /// La coppia di questo computer. La prima volta che si vedono collegati
@@ -739,14 +788,14 @@ impl Engine {
 
     /// Formatta `root` e, con `side`, lo rimette nella coppia al posto di
     /// quel disco.
-    fn format(&mut self, root: &std::path::Path, side: Option<Side>, label: &str) {
+    fn format(&mut self, root: &Path, side: Option<Side>, label: &str) {
         // Solo volumi collegati davvero.
         if !volumes::mounted().iter().any(|r| r == root) {
             log::error!("formattazione rifiutata: {}", root.display());
             return;
         }
         let Some(side) = side else {
-            return self.format_plain(root, label);
+            return self.format_plain(root, label, None);
         };
         let Some(other) = self.root(side.other()) else {
             return;
@@ -798,8 +847,9 @@ impl Engine {
     }
 
     /// Formatta un disco che non fa parte della coppia: resta vuoto, fuori
-    /// dalla coppia.
-    fn format_plain(&mut self, root: &std::path::Path, label: &str) {
+    /// dalla coppia. Con `new_pair`, se questo computer non ha ancora una
+    /// coppia, diventa il lato indicato di una coppia nuova con il compagno.
+    fn format_plain(&mut self, root: &Path, label: &str, new_pair: Option<(&Path, Side)>) {
         // Un disco della coppia si formatta solo per rimetterlo nella coppia.
         let in_pair = Side::BOTH
             .iter()
@@ -814,8 +864,19 @@ impl Engine {
             })
         });
         let result = volumes::format_exfat(root, label);
+        let no_pair = self.shared.config.lock().unwrap().pair.is_none();
+        let paired = match (&result, new_pair) {
+            (Ok(new_root), Some((partner, side))) if no_pair => {
+                self.create_pair(new_root, label, partner, side)
+            }
+            _ => false,
+        };
         self.set(|s| s.busy = None);
         match result {
+            Ok(_) if paired => {
+                self.reconnect();
+                self.notify(self.shared.texts().paired());
+            }
             Ok(_) => {
                 log::info!("disco formattato: {label}");
                 self.reconnect();
@@ -826,6 +887,36 @@ impl Engine {
                 let outcome = self.error(&e.into());
                 self.set(|s| s.outcome = Some(outcome));
                 self.reconnect();
+            }
+        }
+    }
+
+    /// Prepara come nuova coppia il disco appena formattato in `root`, sul
+    /// lato `side`, e `partner`, sull'altro. Il compagno deve essere un disco
+    /// exFAT non ancora usato con HddRaid; i suoi file restano dove sono.
+    fn create_pair(&self, root: &Path, label: &str, partner: &Path, side: Side) -> bool {
+        let info = volumes::info(partner);
+        let usable = partner != root
+            && !self.ejected.contains(partner)
+            && volumes::mounted().iter().any(|r| r == partner)
+            && matches!(Disk::detect(partner), Ok(None))
+            && info.filesystem.as_deref() == Some("exfat");
+        if !usable {
+            log::warn!("compagno non adatto: {}", partner.display());
+            return false;
+        }
+        let (roots, labels) = match side {
+            Side::A => ([root, partner], [label, info.name.as_str()]),
+            Side::B => ([partner, root], [info.name.as_str(), label]),
+        };
+        match Archive::create(roots[0], roots[1], labels, &self.shared.work_dir) {
+            Ok(_) => {
+                log::info!("nuova coppia preparata: {} e {}", labels[0], labels[1]);
+                true
+            }
+            Err(e) => {
+                log::error!("coppia non preparata: {e}");
+                false
             }
         }
     }

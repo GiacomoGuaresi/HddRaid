@@ -309,7 +309,7 @@ export function mockBackend(scenario: string): Backend {
     ...base,
     ...(SCENARIOS[scenario] ?? {}),
   });
-  let settings: Settings = { autostart: true, check_months: 3, language: null };
+  let settings: Settings = { autostart: true, check_months: 3, language: null, theme: null };
   const listeners = new Set<(s: State) => void>();
   let timer: ReturnType<typeof setInterval> | undefined;
 
@@ -370,6 +370,7 @@ export function mockBackend(scenario: string): Backend {
         },
       }));
     },
+    async rescan() {},
     async eject() {
       emit({ busy: { kind: "ejecting" } });
       setTimeout(
@@ -445,8 +446,27 @@ export function mockBackend(scenario: string): Backend {
         disks: { ...state.disks, [side]: disk ? { ...disk, label } : null },
       });
     },
-    async formatDisk(root, side, label) {
+    async formatDisk(root, side, label, partner) {
       emit({ busy: { kind: "formatting", label } });
+      if (side !== null && partner) {
+        setTimeout(() => {
+          const otherSide = side === "A" ? "B" : "A";
+          const otherLabel = state.others.find((o) => o.root === partner)?.name ?? "";
+          const disk = (s: "A" | "B", l: string): DiskView => ({
+            ...(s === "A" ? diskA : diskB),
+            label: l,
+            root: `/Volumes/${l}`,
+          });
+          emit({
+            busy: null,
+            others: state.others.filter((o) => o.root !== root && o.root !== partner),
+            disks: { [side]: disk(side, label), [otherSide]: disk(otherSide, otherLabel) } as State["disks"],
+            pair: { labels: { [side]: label, [otherSide]: otherLabel } as Record<"A" | "B", string> },
+            compared: false,
+          });
+        }, 1500);
+        return;
+      }
       if (side === null) {
         setTimeout(() => {
           const others = state.others.map((o) =>

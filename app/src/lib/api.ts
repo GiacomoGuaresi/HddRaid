@@ -12,6 +12,8 @@ export interface Backend {
   compare(): Promise<void>;
   sync(answers: Record<string, Answer>): Promise<void>;
   eject(): Promise<void>;
+  /** Cerca di nuovo i dischi collegati, anche quelli espulsi. */
+  rescan(): Promise<void>;
   startCheck(): Promise<void>;
   stopCheck(): Promise<void>;
   postponeCheck(): Promise<void>;
@@ -22,8 +24,10 @@ export interface Backend {
   setSettings(settings: Settings): Promise<void>;
   renameDisk(side: Side, label: string): Promise<void>;
   /** Formatta un volume e, con `side`, lo mette nella coppia al posto di
-   *  quel disco; con `null` resta un disco vuoto fuori dalla coppia. */
-  formatDisk(root: string, side: Side | null, label: string): Promise<void>;
+   *  quel disco; con `null` resta un disco vuoto fuori dalla coppia. Con
+   *  `partner`, senza una coppia, ne crea una nuova con quel volume e
+   *  `side` è il lato del disco formattato. */
+  formatDisk(root: string, side: Side | null, label: string, partner?: string): Promise<void>;
   /** Apre un file di un disco, o lo mostra nella cartella con `reveal`. */
   openFile(side: Side, path: string, reveal: boolean): Promise<void>;
   history(): Promise<HistoryEvent[]>;
@@ -44,6 +48,7 @@ function tauriBackend(): Backend {
     compare: () => call("compare"),
     sync: (answers) => call("sync", { answers }),
     eject: () => call("eject"),
+    rescan: () => call("rescan"),
     startCheck: () => call("start_check"),
     stopCheck: () => call("stop_check"),
     postponeCheck: () => call("postpone_check"),
@@ -52,7 +57,8 @@ function tauriBackend(): Backend {
     settings: () => call("get_settings"),
     setSettings: (settings) => call("set_settings", { settings }),
     renameDisk: (side, label) => call("rename_disk", { side, label }),
-    formatDisk: (root, side, label) => call("format_disk", { root, side, label }),
+    formatDisk: (root, side, label, partner) =>
+      call("format_disk", { root, side, label, partner: partner ?? null }),
     openFile: (side, path, reveal) => call("open_file", { side, path, reveal }),
     history: () => call("history"),
     version: () => call("core_version"),

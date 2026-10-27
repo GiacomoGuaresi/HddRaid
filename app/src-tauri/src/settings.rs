@@ -14,6 +14,8 @@ pub struct Settings {
     pub check_months: u32,
     /// `None`: lingua del sistema.
     pub language: Option<String>,
+    /// "light" o "dark"; `None`: tema del sistema.
+    pub theme: Option<String>,
 }
 
 impl Default for Settings {
@@ -22,6 +24,7 @@ impl Default for Settings {
             autostart: true,
             check_months: 3,
             language: None,
+            theme: None,
         }
     }
 }

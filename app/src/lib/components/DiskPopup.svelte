@@ -12,14 +12,18 @@
   import { t } from "$lib/i18n/index.svelte";
   import type { Side, VolumeView } from "$lib/types";
 
-  type Target = { kind: "pair"; side: Side } | { kind: "volume"; volume: VolumeView };
+  type Target = { kind: "pair"; side: Side } | { kind: "volume"; side: Side; volume: VolumeView };
 
   interface Props {
     target: Target;
+    /** Il disco nell'altro posto, se non è della coppia. */
+    partner: VolumeView | null;
+    /** Mette un altro disco collegato in questo posto. */
+    onpick: (root: string) => void;
     onclose: () => void;
   }
 
-  let { target, onclose }: Props = $props();
+  let { target, partner, onpick, onclose }: Props = $props();
 
   const s = $derived(app.state!);
   const pairDisk = $derived(target.kind === "pair" ? s.disks[target.side] : null);
@@ -45,6 +49,16 @@
     const present = (["A", "B"] as Side[]).filter((x) => s.disks[x]);
     return present.length === 1 ? other(present[0]) : null;
   });
+  /** Senza una coppia, il disco formattato e quello nell'altro posto
+   *  diventano la coppia nuova, ciascuno nel suo posto. */
+  const newPair = $derived(
+    target.kind === "volume" &&
+      !s.pair &&
+      partner?.filesystem === "exfat" &&
+      !partner.other_pair
+      ? partner
+      : null,
+  );
   /** Un disco della coppia si formatta solo con l'altro collegato, per
    *  poterci ricopiare i file; gli altri dischi si formattano sempre. */
   const formatBlocked = $derived(
@@ -109,7 +123,11 @@
 
   function format() {
     if (formatBlocked || newNameError || typed !== info.name) return;
-    api().formatDisk(info.root, formatSide, newName.trim());
+    if (newPair && target.kind === "volume") {
+      api().formatDisk(info.root, target.side, newName.trim(), newPair.root);
+    } else {
+      api().formatDisk(info.root, formatSide, newName.trim());
+    }
     onclose();
   }
 </script>
@@ -124,6 +142,17 @@
           <span class="muted">{status}</span>
         </div>
       </header>
+
+      {#if target.kind === "volume" && s.others.length > 1}
+        <label class="row pick">
+          <span class="muted">{t("disk.pick")}</span>
+          <select value={info.root} onchange={(e) => onpick(e.currentTarget.value)}>
+            {#each s.others as volume (volume.root)}
+              <option value={volume.root}>{volume.name}</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
 
       <div class="space">
         <div class="bar"><div style:width="{usedPercent}%"></div></div>
@@ -161,9 +190,11 @@
           <p class="muted hint">{formatBlocked}</p>
         {:else}
           <Button variant="secondary" onclick={startFormat}>
-            {target.kind === "volume" && formatSide
-              ? t("disk.formatAs", { disk: label(formatSide) })
-              : t("disk.format")}
+            {newPair
+              ? t("disk.formatPair", { disk: newPair.name })
+              : target.kind === "volume" && formatSide
+                ? t("disk.formatAs", { disk: label(formatSide) })
+                : t("disk.format")}
           </Button>
         {/if}
       </div>
@@ -171,9 +202,11 @@
       <span class="danger-icon"><TriangleAlert size={30} /></span>
       <h2 class="center">{t("disk.confirm.title", { disk: info.name })}</h2>
       <p class="muted center">
-        {formatSide
-          ? t("disk.confirm.text", { other: label(other(formatSide)) })
-          : t("disk.confirm.plain")}
+        {newPair
+          ? t("disk.confirm.pair", { other: newPair.name })
+          : formatSide
+            ? t("disk.confirm.text", { other: label(other(formatSide)) })
+            : t("disk.confirm.plain")}
       </p>
 
       <label class="field">
@@ -245,6 +278,18 @@
     display: flex;
     justify-content: space-between;
     gap: 16px;
+  }
+  .pick {
+    align-items: center;
+  }
+  select {
+    min-width: 0;
+    font: inherit;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    padding: 8px 12px;
   }
   .warn {
     color: var(--warning);

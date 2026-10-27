@@ -54,6 +54,7 @@
       "noPair": "Collega anche uno dei tuoi dischi HddRaid per usarlo al posto di quello che manca."
     },
     "clickHint": "Clicca su un disco per vedere le sue informazioni.",
+    "rescan": "Cerca i dischi",
     "otherPair": {
       "title": "{disk} appartiene a un'altra coppia",
       "text": "Non lo tocco. Collega i tuoi dischi per allinearli.",
@@ -240,6 +241,10 @@
     },
     "language": "Lingua",
     "languageAuto": "Automatica",
+    "theme": "Tema",
+    "themeAuto": "Automatico",
+    "themeLight": "Chiaro",
+    "themeDark": "Scuro",
     "names": "Nomi dei dischi",
     "namesHint": "Un nome che ti aiuti a riconoscerli, come «Disco rosso».",
     "rename": "Rinomina",
@@ -303,6 +308,8 @@
     },
     "format": "Formatta",
     "formatAs": "Formatta e usa al posto di {disk}",
+    "formatPair": "Formatta e usa insieme a {disk}",
+    "pick": "Disco",
     "needOther": "Per formattarlo collega anche {disk}: servirà per ricopiarci i tuoi file.",
     "confirm": {
       "title": "Tutto quello che c'è su {disk} verrà cancellato",
@@ -310,7 +317,8 @@
       "newName": "Nome del disco dopo la formattazione",
       "type": "Per confermare, scrivi il nome attuale del disco: {disk}",
       "ok": "Formatta",
-      "plain": "Diventerà un disco vuoto, in formato exFAT, che funziona su Windows e Mac."
+      "plain": "Diventerà un disco vuoto, in formato exFAT, che funziona su Windows e Mac.",
+      "pair": "Poi lo uso insieme a {other} come i tuoi dischi HddRaid: da quel momento li terrò uguali."
     }
   }
 }

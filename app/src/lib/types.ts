@@ -137,6 +137,8 @@ export interface Settings {
   check_months: 1 | 3 | 6;
   /** `null`: lingua del sistema. */
   language: "it" | "en" | null;
+  /** `null`: tema del sistema. */
+  theme: "light" | "dark" | null;
 }
 
 export interface HistoryEvent {

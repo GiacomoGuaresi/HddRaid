@@ -7,6 +7,7 @@ mod tray;
 mod view;
 
 use std::collections::BTreeMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use hddraid_core::Side;
@@ -45,6 +46,11 @@ fn sync(engine: Engine, answers: BTreeMap<String, AnswerView>) {
 #[tauri::command]
 fn eject(engine: Engine) {
     engine.send(Cmd::Eject);
+}
+
+#[tauri::command]
+fn rescan(engine: Engine) {
+    engine.send(Cmd::Rescan);
 }
 
 #[tauri::command]
@@ -123,12 +129,14 @@ fn format_disk(
     root: String,
     side: Option<Side>,
     label: String,
+    partner: Option<String>,
 ) -> Result<(), String> {
     hddraid_core::volumes::check_label(&label).map_err(|e| format!("{e:?}"))?;
     engine.send(Cmd::Format {
         root: root.into(),
         side,
         label,
+        partner: partner.map(PathBuf::from),
     });
     Ok(())
 }
@@ -247,6 +255,7 @@ pub fn run() {
             compare,
             sync,
             eject,
+            rescan,
             start_check,
             stop_check,
             postpone_check,

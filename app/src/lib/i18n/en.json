@@ -54,6 +54,7 @@
       "noPair": "Connect one of your HddRaid drives too, to use it instead of the missing one."
     },
     "clickHint": "Click a drive to see its details.",
+    "rescan": "Look for drives",
     "otherPair": {
       "title": "{disk} belongs to another pair",
       "text": "I won't touch it. Connect your drives to align them.",
@@ -240,6 +241,10 @@
     },
     "language": "Language",
     "languageAuto": "Automatic",
+    "theme": "Theme",
+    "themeAuto": "Automatic",
+    "themeLight": "Light",
+    "themeDark": "Dark",
     "names": "Drive names",
     "namesHint": "A name that helps you tell them apart, like “Red drive”.",
     "rename": "Rename",
@@ -303,6 +308,8 @@
     },
     "format": "Format",
     "formatAs": "Format and use instead of {disk}",
+    "formatPair": "Format and use together with {disk}",
+    "pick": "Drive",
     "needOther": "To format it, connect {disk} too: I'll need it to copy your files back.",
     "confirm": {
       "title": "Everything on {disk} will be erased",
@@ -310,7 +317,8 @@
       "newName": "Drive name after formatting",
       "type": "To confirm, type the drive's current name: {disk}",
       "ok": "Format",
-      "plain": "It will become an empty drive, formatted as exFAT, which works on Windows and Mac."
+      "plain": "It will become an empty drive, formatted as exFAT, which works on Windows and Mac.",
+      "pair": "Then I'll use it together with {other} as your HddRaid drives, and keep them the same from then on."
     }
   }
 }

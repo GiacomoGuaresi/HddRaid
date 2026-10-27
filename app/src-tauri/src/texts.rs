@@ -152,6 +152,19 @@ impl Texts {
         )
     }
 
+    pub fn paired(&self) -> (String, String) {
+        (
+            self.pick(
+                "I tuoi dischi sono pronti".into(),
+                "Your drives are ready".into(),
+            ),
+            self.pick(
+                "Da adesso HddRaid li tiene uguali.".into(),
+                "From now on HddRaid keeps them the same.".into(),
+            ),
+        )
+    }
+
     pub fn connected(&self) -> (String, String) {
         (
             self.pick(

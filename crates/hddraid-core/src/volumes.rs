@@ -84,6 +84,89 @@ fn system_volumes() -> Vec<PathBuf> {
     Vec::new()
 }
 
+/// Una partizione di un disco rimovibile, montata o no.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Removable {
+    /// Il dispositivo, come `/dev/sdb1`.
+    pub device: String,
+    pub mounted: bool,
+}
+
+/// File system che si montano da soli: quelli dei dischi esterni.
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+const MOUNTABLE: &[&str] = &["exfat", "vfat", "ntfs"];
+
+/// Le partizioni dei dischi rimovibili che si possono montare. Solo su
+/// Linux: macOS e Windows montano da soli i dischi collegati, molti desktop
+/// Linux (KDE, per esempio) no.
+pub fn removable() -> Vec<Removable> {
+    #[cfg(target_os = "linux")]
+    {
+        let Ok(output) = Command::new("lsblk")
+            .args(["-J", "-p", "-o", "PATH,FSTYPE,MOUNTPOINT,HOTPLUG"])
+            .output()
+        else {
+            return Vec::new();
+        };
+        linux_removable(&String::from_utf8_lossy(&output.stdout))
+    }
+    #[cfg(not(target_os = "linux"))]
+    Vec::new()
+}
+
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+fn linux_removable(json: &str) -> Vec<Removable> {
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(json) else {
+        return Vec::new();
+    };
+    let devices = value["blockdevices"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    devices
+        .iter()
+        .filter(|d| {
+            // `true` nelle versioni recenti di lsblk, "1" in quelle vecchie.
+            d["hotplug"].as_bool() == Some(true) || d["hotplug"].as_str() == Some("1")
+        })
+        .filter(|d| {
+            d["fstype"]
+                .as_str()
+                .is_some_and(|fs| MOUNTABLE.contains(&fs))
+        })
+        .filter_map(|d| {
+            Some(Removable {
+                device: d["path"].as_str()?.to_string(),
+                mounted: d["mountpoint"].as_str().is_some(),
+            })
+        })
+        .collect()
+}
+
+/// Monta il dispositivo `device` come farebbe il desktop, senza permessi di
+/// amministratore, e restituisce la sua radice.
+#[cfg(target_os = "linux")]
+pub fn mount(device: &str) -> io::Result<PathBuf> {
+    let output = Command::new("udisksctl")
+        .args(["mount", "-b", device])
+        .output()?;
+    // "Mounted /dev/sdb1 at /media/giacomo/Disco B"
+    match String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .split_once(" at ")
+    {
+        Some((_, point)) => Ok(PathBuf::from(point.trim_end_matches('.'))),
+        None => Err(io::Error::other(
+            String::from_utf8_lossy(&output.stderr).trim().to_string(),
+        )),
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn mount(_device: &str) -> io::Result<PathBuf> {
+    Err(io::Error::from(io::ErrorKind::Unsupported))
+}
+
 /// Nome e file system di un volume.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VolumeInfo {
@@ -295,15 +378,20 @@ fn format_system(root: &Path, name: &str) -> io::Result<PathBuf> {
     let device = linux_device(root)?;
     run(Command::new("udisksctl").args(["unmount", "-b", &device]))?;
     run(Command::new("pkexec").args(["mkfs.exfat", "-n", name, &device]))?;
-    let output = Command::new("udisksctl")
-        .args(["mount", "-b", &device])
-        .output()?;
-    // "Mounted /dev/sdb1 at /media/giacomo/Disco B"
-    String::from_utf8_lossy(&output.stdout)
-        .trim()
-        .split_once(" at ")
-        .map(|(_, point)| PathBuf::from(point.trim_end_matches('.')))
-        .ok_or_else(|| io::Error::other("disco formattato ma non montato"))
+    // Subito dopo mkfs udisks non conosce ancora il nuovo filesystem e il
+    // mount fallisce: si aspetta udev e si riprova per qualche secondo.
+    let _ = Command::new("udevadm").arg("settle").status();
+    let mut error = String::new();
+    for _ in 0..10 {
+        match mount(&device) {
+            Ok(root) => return Ok(root),
+            Err(e) => error = e.to_string(),
+        }
+        std::thread::sleep(std::time::Duration::from_secs(1));
+    }
+    Err(io::Error::other(format!(
+        "disco formattato ma non montato: {error}"
+    )))
 }
 
 #[cfg(windows)]
@@ -480,6 +568,31 @@ mod tests {
         assert_eq!(mounts.len(), 2);
         assert_eq!(mounts[1].0, "/dev/sdb1");
         assert_eq!(mounts[1].1, Path::new("/media/giacomo/Disco A"));
+    }
+
+    #[test]
+    fn parses_linux_removable() {
+        let json = r#"{"blockdevices": [
+            {"path": "/dev/nvme0n1p2", "fstype": "ext4", "mountpoint": "/", "hotplug": false},
+            {"path": "/dev/sdc", "fstype": null, "mountpoint": null, "hotplug": true},
+            {"path": "/dev/sdc1", "fstype": "exfat", "mountpoint": null, "hotplug": true},
+            {"path": "/dev/sdd1", "fstype": "exfat", "mountpoint": "/media/g/B", "hotplug": "1"},
+            {"path": "/dev/sdd2", "fstype": "ext4", "mountpoint": null, "hotplug": true}
+        ]}"#;
+        let devices = linux_removable(json);
+        assert_eq!(
+            devices,
+            [
+                Removable {
+                    device: "/dev/sdc1".into(),
+                    mounted: false
+                },
+                Removable {
+                    device: "/dev/sdd1".into(),
+                    mounted: true
+                },
+            ]
+        );
     }
 
     #[test]

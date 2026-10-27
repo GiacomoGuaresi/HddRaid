@@ -16,7 +16,7 @@
   --border: #e6ded3;
   --border-strong: #d3c8ba;
   /* Corpo dei dischi nell'illustrazione. */
-  --disk: #4a433d;
+  --disk: #ab9f92;
 
   --text: #2a2622;
   --text-muted: #6b625a;
@@ -74,6 +74,42 @@
 
     --shadow: 0 1px 2px rgb(0 0 0 / 25%), 0 8px 24px rgb(0 0 0 / 25%);
   }
+}
+
+/* Tema scelto nelle impostazioni, al posto di quello del sistema. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #262523;
+  --surface: #302e2b;
+  --surface-2: #3a3834;
+  --surface-3: #45423d;
+  --border: #44413c;
+  --border-strong: #5a5650;
+  --disk: #8a8279;
+
+  --text: #f0ece6;
+  --text-muted: #b0a89f;
+  --text-faint: #7f786f;
+
+  --accent: #22b5aa;
+  --accent-hover: #35c7bc;
+  --accent-pressed: #1a9a90;
+  --on-accent: #071b19;
+  --accent-soft: #1f3b38;
+
+  --success: #5cc27f;
+  --success-soft: #24392b;
+  --warning: #ffb020;
+  --warning-soft: #3f3220;
+  --danger: #f0616d;
+  --danger-soft: #45282a;
+
+  --shadow: 0 1px 2px rgb(0 0 0 / 25%), 0 8px 24px rgb(0 0 0 / 25%);
 }
 
 *,
