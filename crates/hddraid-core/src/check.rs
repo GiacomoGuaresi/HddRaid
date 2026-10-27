@@ -163,11 +163,14 @@ impl Archive {
                         if cancel.load(Ordering::Relaxed) || gone.load(Ordering::Relaxed) {
                             break;
                         }
-                        let health = check_file(&native(root, &entry.path), entry);
-                        if health == Health::Missing && !root.join(DATA_DIR).is_dir() {
+                        // Un disco scollegato non ha più la cartella dell'app:
+                        // si controlla prima di ogni file, così un file che
+                        // manca non viene preso per una modifica.
+                        if !root.join(DATA_DIR).is_dir() {
                             gone.store(true, Ordering::Relaxed);
                             break;
                         }
+                        let health = check_file(&native(root, &entry.path), entry);
                         if tx.send((side, key.clone(), health, entry.size)).is_err() {
                             break;
                         }

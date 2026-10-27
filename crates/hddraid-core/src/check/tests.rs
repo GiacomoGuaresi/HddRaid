@@ -167,13 +167,16 @@ fn interrupted_check_resumes() {
 #[test]
 fn unplugged_disk_pauses_the_check() {
     let mut e = env();
-    let gone = e.disks.b.with_extension("gone");
+    // Toglie solo la cartella dell'app: Windows non permette di rinominare
+    // il disco intero mentre il controllo ha dei file aperti.
+    let data = e.disks.b.join(crate::disk::DATA_DIR);
+    let gone = e.disks.b.join("gone");
     let report = e
         .archive
         .full_check(
             &mut |p| {
                 if p.checked == 4 {
-                    fs::rename(&e.disks.b, &gone).unwrap();
+                    fs::rename(&data, &gone).unwrap();
                 }
             },
             &AtomicBool::new(false),
@@ -182,7 +185,7 @@ fn unplugged_disk_pauses_the_check() {
     assert!(!report.completed);
     assert!(e.archive.index().meta("last_full_check").unwrap().is_none());
 
-    fs::rename(&gone, &e.disks.b).unwrap();
+    fs::rename(&gone, &data).unwrap();
     let (report, _) = check(&mut e.archive);
     assert!(report.completed);
     assert!(report.changed.is_empty(), "{:?}", report.changed);
