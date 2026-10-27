@@ -6,6 +6,7 @@
 - [Formato dei dati](formato-dati.md): cosa scrive l'app sui dischi
 - [Stack](stack.md): tecnologie, installazione, distribuzione
 - [Roadmap](roadmap.md): milestone e step
+- [Sviluppo](sviluppo.md): comandi e dischi simulati
 
 ## Da PhotoSaver
 
