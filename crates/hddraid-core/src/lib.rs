@@ -10,6 +10,7 @@ pub mod fsutil;
 pub mod hash;
 pub mod index;
 pub mod paths;
+pub mod plan;
 pub mod scan;
 
 pub use archive::{Archive, Side};
