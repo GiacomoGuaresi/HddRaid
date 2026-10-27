@@ -185,7 +185,8 @@ mod tests {
     fn mtime_tolerance() {
         assert!(same_mtime(0, MTIME_TOLERANCE_NS));
         assert!(!same_mtime(0, MTIME_TOLERANCE_NS + 1));
-        let t = ns_system_time(-5);
-        assert_eq!(system_time_ns(t), -5);
+        // Multiplo di 100 ns, la risoluzione delle date su Windows.
+        let t = ns_system_time(-500);
+        assert_eq!(system_time_ns(t), -500);
     }
 }

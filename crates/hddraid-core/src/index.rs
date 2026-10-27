@@ -5,7 +5,7 @@
 //! Vedi `doc/formato-dati.md`.
 
 use std::collections::{BTreeMap, HashSet};
-use std::fs::{self, File};
+use std::fs::{self, OpenOptions};
 use std::path::Path;
 
 use rusqlite::{Connection, OpenFlags, OptionalExtension, Transaction, params};
@@ -211,7 +211,8 @@ impl Index {
             &tmp,
             None::<fn(rusqlite::backup::Progress)>,
         )?;
-        File::open(&tmp)?.sync_all()?;
+        // Su Windows `sync_all` richiede un file aperto in scrittura.
+        OpenOptions::new().write(true).open(&tmp)?.sync_all()?;
         fs::rename(&tmp, dest)?;
         sync_parent(dest);
         Ok(())
