@@ -152,6 +152,12 @@ impl Archive {
             Ok(())
         })?;
         info.interrupted = index.journal()?;
+        // La pagina si riscrive se manca, per esempio dopo una pulizia del
+        // disco o un aggiornamento dell'app. È solo una comodità: un errore
+        // qui non deve impedire di allineare.
+        for disk in &disks {
+            let _ = disk.write_download_page();
+        }
 
         let archive = Archive { disks, index, info };
         archive.save()?;

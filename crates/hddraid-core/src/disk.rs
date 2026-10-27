@@ -17,6 +17,9 @@ pub const FORMAT: u32 = 1;
 const IDENTITY_FILE: &str = "disk.json";
 const INDEX_FILE: &str = "index.sqlite";
 
+/// Contenuto di `Scarica HddRaid.html`.
+const DOWNLOAD_HTML: &str = include_str!("../assets/download.html");
+
 /// Contenuto di `disk.json`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DiskIdentity {
@@ -64,6 +67,7 @@ impl Disk {
         };
         disk.write_identity()?;
         hide_data_dir(root);
+        disk.write_download_page()?;
         Ok(disk)
     }
 
@@ -127,6 +131,16 @@ impl Disk {
         self.data_dir().join(INDEX_FILE)
     }
 
+    /// Scrive `Scarica HddRaid.html` nella radice, se manca o è vecchia.
+    pub fn write_download_page(&self) -> Result<()> {
+        let path = self.root.join(crate::paths::DOWNLOAD_PAGE);
+        if fs::read(&path).is_ok_and(|current| current == DOWNLOAD_HTML.as_bytes()) {
+            return Ok(());
+        }
+        atomic_write(&path, DOWNLOAD_HTML.as_bytes())?;
+        Ok(())
+    }
+
     fn write_identity(&self) -> Result<()> {
         let json = serde_json::to_vec_pretty(&self.identity)?;
         atomic_write(&identity_path(&self.root), &json)?;
@@ -155,6 +169,17 @@ fn hide_data_dir(root: &Path) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn download_page_is_written_once() {
+        let dir = tempfile::tempdir().unwrap();
+        let disk = Disk::init(dir.path(), "arch-1", Side::A, "Disco A").unwrap();
+        let page = dir.path().join(crate::paths::DOWNLOAD_PAGE);
+        assert!(fs::read_to_string(&page).unwrap().contains("HddRaid"));
+        fs::remove_file(&page).unwrap();
+        disk.write_download_page().unwrap();
+        assert!(page.exists());
+    }
 
     #[test]
     fn init_then_open() {
