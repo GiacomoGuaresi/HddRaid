@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+use crate::archive::Side;
 use crate::error::{Error, Result};
 use crate::fsutil::atomic_write;
 
@@ -23,6 +24,8 @@ pub struct DiskIdentity {
     pub disk_id: String,
     /// Identificativo della coppia, uguale su entrambi i dischi.
     pub archive_id: String,
+    /// Il lato nella coppia: resta lo stesso su qualsiasi computer.
+    pub side: Side,
     /// Nome scelto dall'utente.
     pub label: String,
     /// Data di preparazione (UTC, RFC 3339).
@@ -41,7 +44,7 @@ pub struct Disk {
 impl Disk {
     /// Prepara un disco: scrive `.hddraid/disk.json`. I file già presenti
     /// restano dove sono. Rifiuta un disco già preparato.
-    pub fn init(root: &Path, archive_id: &str, label: &str) -> Result<Disk> {
+    pub fn init(root: &Path, archive_id: &str, side: Side, label: &str) -> Result<Disk> {
         let path = identity_path(root);
         if path.exists() {
             return Err(Error::AlreadyInitialized(root.to_path_buf()));
@@ -50,6 +53,7 @@ impl Disk {
         let identity = DiskIdentity {
             disk_id: uuid::Uuid::new_v4().to_string(),
             archive_id: archive_id.to_string(),
+            side,
             label: label.to_string(),
             created: crate::now_rfc3339(),
             format: FORMAT,
@@ -98,6 +102,10 @@ impl Disk {
 
     pub fn id(&self) -> &str {
         &self.identity.disk_id
+    }
+
+    pub fn side(&self) -> Side {
+        self.identity.side
     }
 
     pub fn label(&self) -> &str {
@@ -151,7 +159,7 @@ mod tests {
     #[test]
     fn init_then_open() {
         let dir = tempfile::tempdir().unwrap();
-        let disk = Disk::init(dir.path(), "arch-1", "Disco A").unwrap();
+        let disk = Disk::init(dir.path(), "arch-1", Side::A, "Disco A").unwrap();
         let opened = Disk::open(dir.path()).unwrap();
         assert_eq!(disk.identity(), opened.identity());
         assert_eq!(opened.label(), "Disco A");
@@ -161,8 +169,8 @@ mod tests {
     #[test]
     fn init_twice_is_refused() {
         let dir = tempfile::tempdir().unwrap();
-        Disk::init(dir.path(), "arch-1", "Disco A").unwrap();
-        let err = Disk::init(dir.path(), "arch-2", "Disco B").unwrap_err();
+        Disk::init(dir.path(), "arch-1", Side::A, "Disco A").unwrap();
+        let err = Disk::init(dir.path(), "arch-2", Side::B, "Disco B").unwrap_err();
         assert!(matches!(err, Error::AlreadyInitialized(_)));
     }
 
@@ -170,7 +178,7 @@ mod tests {
     fn init_keeps_existing_files() {
         let dir = tempfile::tempdir().unwrap();
         fs::write(dir.path().join("foto.jpg"), b"x").unwrap();
-        Disk::init(dir.path(), "arch-1", "Disco A").unwrap();
+        Disk::init(dir.path(), "arch-1", Side::A, "Disco A").unwrap();
         assert_eq!(fs::read(dir.path().join("foto.jpg")).unwrap(), b"x");
     }
 
@@ -184,7 +192,7 @@ mod tests {
     #[test]
     fn newer_format_is_refused() {
         let dir = tempfile::tempdir().unwrap();
-        let mut disk = Disk::init(dir.path(), "arch-1", "Disco A").unwrap();
+        let mut disk = Disk::init(dir.path(), "arch-1", Side::A, "Disco A").unwrap();
         disk.identity.format = FORMAT + 1;
         disk.write_identity().unwrap();
         assert!(matches!(
@@ -196,7 +204,7 @@ mod tests {
     #[test]
     fn set_label_persists() {
         let dir = tempfile::tempdir().unwrap();
-        let mut disk = Disk::init(dir.path(), "arch-1", "Disco A").unwrap();
+        let mut disk = Disk::init(dir.path(), "arch-1", Side::A, "Disco A").unwrap();
         disk.set_label("Disco rosso").unwrap();
         assert_eq!(Disk::open(dir.path()).unwrap().label(), "Disco rosso");
     }

@@ -44,6 +44,9 @@ pub struct Skipped {
 #[derive(Debug, Default)]
 pub struct Report {
     pub done: usize,
+    /// File copiati e cancellati, per il riepilogo finale.
+    pub copied: usize,
+    pub deleted: usize,
     pub bytes_copied: u64,
     /// Azioni saltate perché il file è cambiato, è bloccato o non c'è più:
     /// si riprendono al giro successivo.
@@ -156,7 +159,14 @@ impl Archive {
                 Ok(())
             })?;
             match outcome {
-                Outcome::Done { .. } => report.done += 1,
+                Outcome::Done { event, .. } => {
+                    report.done += 1;
+                    match event {
+                        Some(("copied", _)) => report.copied += 1,
+                        Some(("deleted", _)) => report.deleted += 1,
+                        _ => {}
+                    }
+                }
                 Outcome::Skipped(reason) => report.skipped.push(Skipped {
                     path: current.to_string(),
                     reason,
@@ -175,8 +185,17 @@ impl Archive {
             current: "",
         });
         let now = crate::now_rfc3339();
-        self.index_mut()
-            .update(|tx| tx.set_meta("last_sync", Some(&now)))?;
+        let details = format!(
+            "copied={} deleted={} skipped={} bytes={}",
+            report.copied,
+            report.deleted,
+            report.skipped.len(),
+            report.bytes_copied
+        );
+        self.index_mut().update(|tx| {
+            tx.set_meta("last_sync", Some(&now))?;
+            tx.log("synced", None, None, Some(&details))
+        })?;
         self.save()?;
         Ok(report)
     }

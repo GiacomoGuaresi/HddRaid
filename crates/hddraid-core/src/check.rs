@@ -16,6 +16,7 @@ use chrono::{DateTime, Utc};
 
 use crate::archive::{Archive, Side};
 use crate::copy::safe_copy;
+use crate::disk::DATA_DIR;
 use crate::error::Result;
 use crate::hash::hash_file;
 use crate::index::{BaseEntry, Kind};
@@ -148,18 +149,25 @@ impl Archive {
         };
         progress(&state);
 
+        // Un disco scollegato interrompe il controllo, come `cancel`.
+        let gone = AtomicBool::new(false);
         let (tx, rx) = mpsc::channel::<(Side, String, Health, u64)>();
         let result: Result<()> = std::thread::scope(|scope| {
             for side in Side::BOTH {
                 let tx = tx.clone();
                 let list = &todo[side as usize];
                 let root = &roots[side as usize];
+                let gone = &gone;
                 scope.spawn(move || {
                     for (key, entry) in list {
-                        if cancel.load(Ordering::Relaxed) {
+                        if cancel.load(Ordering::Relaxed) || gone.load(Ordering::Relaxed) {
                             break;
                         }
                         let health = check_file(&native(root, &entry.path), entry);
+                        if health == Health::Missing && !root.join(DATA_DIR).is_dir() {
+                            gone.store(true, Ordering::Relaxed);
+                            break;
+                        }
                         if tx.send((side, key.clone(), health, entry.size)).is_err() {
                             break;
                         }
@@ -197,6 +205,12 @@ impl Archive {
         result?;
         self.flush_verified(&mut pending, &disk_ids)?;
 
+        if gone.load(Ordering::Relaxed) {
+            // L'indice si salva dove si può: il controllo riprenderà dal
+            // disco con le verifiche più recenti.
+            let _ = self.save();
+            return Ok(report);
+        }
         if cancel.load(Ordering::Relaxed) && state.checked < total {
             self.save()?;
             return Ok(report);

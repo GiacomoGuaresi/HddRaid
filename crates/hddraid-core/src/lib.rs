@@ -14,6 +14,7 @@ pub mod paths;
 pub mod plan;
 pub mod scan;
 pub mod sync;
+pub mod volumes;
 
 pub use archive::{Archive, Side};
 pub use disk::Disk;

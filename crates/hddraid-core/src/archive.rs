@@ -8,12 +8,14 @@ use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use serde::{Deserialize, Serialize};
+
 use crate::disk::Disk;
 use crate::error::{Error, Result};
 use crate::index::{Index, JournalEntry};
 
 /// Uno dei due dischi.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Side {
     A,
     B,
@@ -81,8 +83,8 @@ impl Archive {
         }
         let archive_id = uuid::Uuid::new_v4().to_string();
         let disks = [
-            Disk::init(root_a, &archive_id, labels[0])?,
-            Disk::init(root_b, &archive_id, labels[1])?,
+            Disk::init(root_a, &archive_id, Side::A, labels[0])?,
+            Disk::init(root_b, &archive_id, Side::B, labels[1])?,
         ];
         let work = work_path(work_dir, &archive_id)?;
         let _ = fs::remove_file(&work);
@@ -102,15 +104,19 @@ impl Archive {
         Ok(archive)
     }
 
-    /// Apre una coppia già preparata. Usa l'indice più recente tra i due e lo
+    /// Apre una coppia già preparata, in qualsiasi ordine: il lato di ogni
+    /// disco è scritto nel disco. Usa l'indice più recente tra i due e lo
     /// riscrive su entrambi i dischi.
-    pub fn open(root_a: &Path, root_b: &Path, work_dir: &Path) -> Result<Archive> {
-        let disks = [Disk::open(root_a)?, Disk::open(root_b)?];
+    pub fn open(root_1: &Path, root_2: &Path, work_dir: &Path) -> Result<Archive> {
+        let mut disks = [Disk::open(root_1)?, Disk::open(root_2)?];
+        if disks[0].side() == Side::B {
+            disks.swap(0, 1);
+        }
         let archive_id = disks[0].identity().archive_id.clone();
         if disks[1].identity().archive_id != archive_id {
             return Err(Error::DifferentArchives);
         }
-        if disks[0].id() == disks[1].id() {
+        if disks[0].id() == disks[1].id() || disks[0].side() == disks[1].side() {
             return Err(Error::SameDisk);
         }
 
@@ -172,12 +178,14 @@ impl Archive {
         &self.info
     }
 
-    /// Scrive l'indice su entrambi i dischi.
+    /// Scrive l'indice su entrambi i dischi. Se uno non risponde, prova
+    /// comunque l'altro e restituisce il primo errore.
     pub fn save(&self) -> Result<()> {
-        for disk in &self.disks {
-            self.index.save_to(&disk.index_path())?;
-        }
-        Ok(())
+        let results = self
+            .disks
+            .each_ref()
+            .map(|d| self.index.save_to(&d.index_path()));
+        results.into_iter().collect()
     }
 }
 
@@ -225,9 +233,19 @@ mod tests {
     }
 
     #[test]
+    fn sides_come_from_the_disks() {
+        let e = env();
+        drop(Archive::create(&e.a, &e.b, ["Rosso", "Blu"], &e.work).unwrap());
+        let archive = Archive::open(&e.b, &e.a, &e.work).unwrap();
+        assert_eq!(archive.disk(Side::A).root(), e.a);
+        assert_eq!(archive.disk(Side::A).label(), "Rosso");
+        assert_eq!(archive.disk(Side::B).side(), Side::B);
+    }
+
+    #[test]
     fn create_refuses_prepared_disk() {
         let e = env();
-        Disk::init(&e.b, "x", "B").unwrap();
+        Disk::init(&e.b, "x", Side::B, "B").unwrap();
         assert!(matches!(
             Archive::create(&e.a, &e.b, ["A", "B"], &e.work),
             Err(Error::AlreadyInitialized(_))
@@ -238,8 +256,8 @@ mod tests {
     #[test]
     fn different_pairs_are_refused() {
         let e = env();
-        Disk::init(&e.a, "uno", "A").unwrap();
-        Disk::init(&e.b, "due", "B").unwrap();
+        Disk::init(&e.a, "uno", Side::A, "A").unwrap();
+        Disk::init(&e.b, "due", Side::B, "B").unwrap();
         assert!(matches!(
             Archive::open(&e.a, &e.b, &e.work),
             Err(Error::DifferentArchives)

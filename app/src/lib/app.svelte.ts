@@ -53,6 +53,9 @@ export async function start() {
     app.state = s;
   });
   app.state = await api.state();
+  // I file possono cambiare mentre la finestra è chiusa: alla riapertura si
+  // confronta di nuovo.
+  window.addEventListener("focus", () => api.refresh());
 }
 
 export function screen(): ScreenName {

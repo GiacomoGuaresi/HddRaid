@@ -85,6 +85,7 @@ const base: State = {
   last_sync: ago(12),
   last_check: ago(40),
   check_due: false,
+  check_estimate: 3 * 3600,
 };
 
 const SCENARIOS: Record<string, Partial<State>> = {
@@ -133,7 +134,8 @@ const SCENARIOS: Record<string, Partial<State>> = {
     },
   },
   "check-paused": { outcome: { kind: "checked", ok: 0, repairs: [], lost: [], completed: false } },
-  error: { outcome: { kind: "error", message: "Non riesco a scrivere sul Disco B: è in sola lettura." } },
+  error: { outcome: { kind: "error", code: "read_only", disk: "B", message: "Permission denied (os error 13)" } },
+  disconnected: { outcome: { kind: "error", code: "disconnected", disk: "B", message: "No such file or directory" } },
 };
 
 const history: HistoryEvent[] = [
@@ -206,6 +208,7 @@ export function mockBackend(scenario: string): Backend {
     async repair() {
       run("repairing", 2, () => ({ outcome: { kind: "repaired", done: 2, skipped: [] } }));
     },
+    async refresh() {},
     async dismiss() {
       emit({ outcome: null });
     },

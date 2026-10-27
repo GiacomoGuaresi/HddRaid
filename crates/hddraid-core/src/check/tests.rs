@@ -163,3 +163,27 @@ fn interrupted_check_resumes() {
             .is_none()
     );
 }
+
+#[test]
+fn unplugged_disk_pauses_the_check() {
+    let mut e = env();
+    let gone = e.disks.b.with_extension("gone");
+    let report = e
+        .archive
+        .full_check(
+            &mut |p| {
+                if p.checked == 4 {
+                    fs::rename(&e.disks.b, &gone).unwrap();
+                }
+            },
+            &AtomicBool::new(false),
+        )
+        .unwrap();
+    assert!(!report.completed);
+    assert!(e.archive.index().meta("last_full_check").unwrap().is_none());
+
+    fs::rename(&gone, &e.disks.b).unwrap();
+    let (report, _) = check(&mut e.archive);
+    assert!(report.completed);
+    assert!(report.changed.is_empty(), "{:?}", report.changed);
+}

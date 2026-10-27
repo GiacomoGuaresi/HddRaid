@@ -91,7 +91,9 @@ export type Outcome =
   | { kind: "checked"; ok: number; repairs: Repair[]; lost: string[]; completed: boolean }
   | { kind: "repaired"; done: number; skipped: Skipped[] }
   | { kind: "ejected" }
-  | { kind: "error"; message: string };
+  | { kind: "error"; code: ErrorCode; disk: Side | null; message: string };
+
+export type ErrorCode = "disconnected" | "no_space" | "read_only" | "eject" | "other";
 
 export interface State {
   /** `null` finché non c'è una coppia di dischi: primo avvio. */
@@ -107,6 +109,8 @@ export interface State {
   last_sync: string | null;
   last_check: string | null;
   check_due: boolean;
+  /** Durata stimata del controllo completo, in secondi. */
+  check_estimate: number | null;
 }
 
 export interface Settings {

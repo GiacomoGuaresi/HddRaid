@@ -64,6 +64,19 @@ cargo run -p hddraid-devtools --bin dev-disks -- break <scenario>
 
 Gli stessi dischi si usano nei test, tramite la libreria `hddraid-devtools`.
 
+Per usarli con l'app, `HDDRAID_DEV_DISKS` elenca le cartelle da trattare come
+volumi collegati (separate da `:`, o `;` su Windows). Il rilevamento le
+controlla ogni 2 secondi come i dischi veri; "Espelli" non le tocca.
+
+```sh
+cargo run -p hddraid-cli -- init dev-disks/disk-a dev-disks/disk-b
+cd app && HDDRAID_DEV_DISKS="$PWD/../dev-disks/disk-a:$PWD/../dev-disks/disk-b" pnpm tauri dev
+```
+
+Il log dell'app è in `~/Library/Logs/com.giacomoguaresi.hddraid/` (macOS),
+`%LOCALAPPDATA%\com.giacomoguaresi.hddraid\logs\` (Windows) o
+`~/.local/share/com.giacomoguaresi.hddraid/logs/` (Linux).
+
 ## CLI di debug
 
 Prova il motore sui dischi simulati, senza interfaccia. La copia locale

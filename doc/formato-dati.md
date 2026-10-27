@@ -20,6 +20,7 @@ Su Windows la cartella `.hddraid/` viene anche marcata come nascosta.
 {
   "disk_id": "3f2a…",
   "archive_id": "9c41…",
+  "side": "A",
   "label": "Disco A",
   "created": "2026-10-27T19:10:00+00:00",
   "format": 1
@@ -30,6 +31,7 @@ Su Windows la cartella `.hddraid/` viene anche marcata come nascosta.
 |---|---|
 | `disk_id` | identificativo unico del disco (UUID) |
 | `archive_id` | identificativo della coppia di dischi, uguale su entrambi |
+| `side` | `A` o `B`: il lato del disco nella coppia, uguale su qualsiasi computer |
 | `label` | nome scelto dall'utente ("Disco A" e "Disco B" di default), usato in tutti i messaggi; modificabile dalle impostazioni |
 | `created` | data di preparazione (UTC) |
 | `format` | versione del formato: un'app più vecchia rifiuta un disco più nuovo |

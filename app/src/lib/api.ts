@@ -8,6 +8,8 @@ export interface Backend {
   state(): Promise<State>;
   /** Chiama `listener` a ogni cambio di stato. */
   subscribe(listener: (state: State) => void): Promise<() => void>;
+  /** Confronta di nuovo i dischi, se collegati (all'apertura della finestra). */
+  refresh(): Promise<void>;
   sync(answers: Record<string, Answer>): Promise<void>;
   eject(): Promise<void>;
   startCheck(): Promise<void>;
@@ -34,6 +36,7 @@ function tauriBackend(): Backend {
       const { listen } = await import("@tauri-apps/api/event");
       return listen<State>("state", (e) => listener(e.payload));
     },
+    refresh: () => call("refresh"),
     sync: (answers) => call("sync", { answers }),
     eject: () => call("eject"),
     startCheck: () => call("start_check"),
