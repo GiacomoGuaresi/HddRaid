@@ -5,6 +5,7 @@
 pub mod disk;
 pub mod error;
 pub mod fsutil;
+pub mod index;
 
 pub use disk::Disk;
 pub use error::{Error, Result};

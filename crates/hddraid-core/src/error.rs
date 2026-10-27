@@ -18,6 +18,15 @@ pub enum Error {
 
     #[error("formato {found} scritto da un'app più nuova (supportato fino a {supported})")]
     FormatTooNew { found: u32, supported: u32 },
+
+    #[error("errore dell'indice: {0}")]
+    Db(#[from] rusqlite::Error),
+
+    #[error("indice scritto da un'app più nuova (schema {found}, supportato fino a {supported})")]
+    IndexTooNew { found: i32, supported: i32 },
+
+    #[error("{} non è un indice HddRaid valido", .0.display())]
+    IndexInvalid(PathBuf),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
