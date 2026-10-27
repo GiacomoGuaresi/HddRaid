@@ -619,9 +619,15 @@ fn dir_entry(path: &str) -> BaseEntry {
 }
 
 /// Azioni che corrispondono alla risposta a una domanda. `label_b` è il nome
-/// del disco B, usato per "tienile entrambe". Una risposta che non ha senso
-/// per la domanda non produce azioni.
-pub fn resolve(question: &Question, answer: Answer, label_b: &str, b: &Scan) -> Vec<Action> {
+/// del disco B, usato per "tienile entrambe"; `taken_on_b` dice se un
+/// percorso è già occupato sul disco B. Una risposta che non ha senso per la
+/// domanda non produce azioni.
+pub fn resolve(
+    question: &Question,
+    answer: Answer,
+    label_b: &str,
+    taken_on_b: &dyn Fn(&str) -> bool,
+) -> Vec<Action> {
     match (&question.a, &question.b) {
         (Some(va), Some(vb)) => match answer {
             Answer::Keep(side) => {
@@ -637,7 +643,7 @@ pub fn resolve(question: &Question, answer: Answer, label_b: &str, b: &Scan) -> 
                 }]
             }
             Answer::KeepBoth => {
-                let alt = alt_name(&vb.path, label_b, b);
+                let alt = alt_name(&vb.path, label_b, taken_on_b);
                 vec![
                     Action::Rename {
                         side: Side::B,
@@ -701,7 +707,7 @@ pub fn resolve(question: &Question, answer: Answer, label_b: &str, b: &Scan) -> 
 }
 
 /// `nome (etichetta).ext`, con un numero se esiste già sul disco B.
-fn alt_name(path: &str, label: &str, b: &Scan) -> String {
+fn alt_name(path: &str, label: &str, taken: &dyn Fn(&str) -> bool) -> String {
     let name = paths::file_name(path);
     let (stem, ext) = match name.rsplit_once('.') {
         Some((s, e)) if !s.is_empty() => (s, format!(".{e}")),
@@ -716,7 +722,7 @@ fn alt_name(path: &str, label: &str, b: &Scan) -> String {
             };
             paths::with_file_name(path, &format!("{stem} {suffix}{ext}"))
         })
-        .find(|p| !b.files.contains_key(&paths::key(p)))
+        .find(|p| !taken(p))
         .unwrap_or_default()
 }
 

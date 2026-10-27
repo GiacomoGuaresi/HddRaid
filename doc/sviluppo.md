@@ -63,4 +63,19 @@ export HDDRAID_WORK=$PWD/dev-disks/work
 cargo run -p hddraid-cli -- init dev-disks/disk-a dev-disks/disk-b
 cargo run -p hddraid-cli -- status dev-disks/disk-a dev-disks/disk-b
 cargo run -p hddraid-cli -- scan dev-disks/disk-a
+cargo run -p hddraid-cli -- sync dev-disks/disk-a dev-disks/disk-b
+```
+
+`sync` mostra il piano, chiede cosa fare per cancellazioni e conflitti
+(oppure `--answer delete|restore|keep-a|keep-b|both|skip` per tutte) e
+conferma prima di eseguire (`--yes` per saltare la conferma).
+
+Un giro completo:
+
+```sh
+cargo run -p hddraid-devtools --bin dev-disks -- setup
+cargo run -p hddraid-cli -- init dev-disks/disk-a dev-disks/disk-b
+cargo run -p hddraid-cli -- sync dev-disks/disk-a dev-disks/disk-b --yes
+cargo run -p hddraid-devtools --bin dev-disks -- break all
+cargo run -p hddraid-cli -- sync dev-disks/disk-a dev-disks/disk-b
 ```

@@ -42,12 +42,12 @@ Legenda: ⬜ da fare · 🔄 in corso · ✅ fatto
 | # | Step | Commit | Stato |
 |---|---|---|---|
 | 2.1 | **Confronto a tre vie** e piano delle azioni ([tabella dei casi](sincronizzazione.md#tabella-dei-casi)) | `feat(sync): three-way plan` | ✅ |
-| 2.2 | **Esecuzione** del piano, nuova base su entrambi i dischi | `feat(sync): apply plan` | ⬜ |
-| 2.3 | **Cancellazioni e conflitti** in sospeso (`pending`) e risoluzioni | `feat(sync): deletions and conflicts` | ⬜ |
+| 2.2 | **Esecuzione** del piano, nuova base su entrambi i dischi | `feat(sync): apply plan` | ✅ |
+| 2.3 | **Cancellazioni e conflitti** in sospeso (`pending`) e risoluzioni | `feat(sync): deletions and conflicts` | ✅ |
 | 2.4 | **Spostamenti e rinomine** tramite hash, cambi di sole maiuscole | `feat(sync): moves` | ✅ |
-| 2.5 | **Journal** e ripresa delle operazioni interrotte | `feat(core): operation journal` | ⬜ |
-| 2.6 | **Adozione**: primo allineamento senza base | `feat(sync): adopt existing disks` | ⬜ |
-| 2.7 | Test end-to-end degli scenari di guasto, anche su volumi exFAT veri | `test: failure scenarios` | ⬜ |
+| 2.5 | **Journal** e ripresa delle operazioni interrotte | `feat(core): operation journal` | ✅ |
+| 2.6 | **Adozione**: primo allineamento senza base | `feat(sync): adopt existing disks` | ✅ |
+| 2.7 | Test end-to-end degli scenari di guasto, anche su volumi exFAT veri | `test: failure scenarios` | 🔄 |
 
 ## M3 — Controllo completo (senza UI) → `v0.3.0`
 

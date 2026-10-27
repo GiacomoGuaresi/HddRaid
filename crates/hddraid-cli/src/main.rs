@@ -6,10 +6,13 @@
 //! cargo run -p hddraid-cli -- status dev-disks/disk-a dev-disks/disk-b
 //! ```
 
+use std::io::{BufRead, Write};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use clap::ValueEnum;
 use clap::{Parser, Subcommand};
+use hddraid_core::plan::{Action, Answer, Question, QuestionKind};
 use hddraid_core::{Archive, Side, scan};
 
 #[derive(Parser)]
@@ -38,6 +41,46 @@ enum Command {
     Scan { dir: PathBuf },
     /// Mostra lo stato della coppia.
     Status { a: PathBuf, b: PathBuf },
+    /// Allinea i dischi.
+    Sync {
+        a: PathBuf,
+        b: PathBuf,
+        /// Risposta da dare a tutte le domande (altrimenti le chiede).
+        #[arg(long)]
+        answer: Option<CliAnswer>,
+        /// Non chiedere conferma prima di eseguire.
+        #[arg(long)]
+        yes: bool,
+    },
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum CliAnswer {
+    /// Cancella anche dall'altro disco.
+    Delete,
+    /// Rimetti il file dove manca.
+    Restore,
+    /// Tieni la versione del disco A.
+    KeepA,
+    /// Tieni la versione del disco B.
+    KeepB,
+    /// Tieni entrambe le versioni.
+    Both,
+    /// Decidi dopo.
+    Skip,
+}
+
+impl CliAnswer {
+    fn answer(self) -> Option<Answer> {
+        match self {
+            CliAnswer::Delete => Some(Answer::DeleteEverywhere),
+            CliAnswer::Restore => Some(Answer::Restore),
+            CliAnswer::KeepA => Some(Answer::Keep(Side::A)),
+            CliAnswer::KeepB => Some(Answer::Keep(Side::B)),
+            CliAnswer::Both => Some(Answer::KeepBoth),
+            CliAnswer::Skip => None,
+        }
+    }
 }
 
 fn main() -> ExitCode {
@@ -96,8 +139,118 @@ fn run(command: Command, work: &Path) -> hddraid_core::Result<()> {
             }
             println!("File nella base: {}", archive.index().base()?.len());
         }
+        Command::Sync { a, b, answer, yes } => {
+            let mut archive = Archive::open(&a, &b, work)?;
+            let plan = archive.plan()?;
+            if plan.is_empty() {
+                println!("I dischi sono già uguali.");
+                archive.apply(&plan.actions, &mut |_| {})?;
+                return Ok(());
+            }
+            let mut actions = plan.actions.clone();
+            for action in &plan.actions {
+                if let Some(line) = describe(action) {
+                    println!("  {line}");
+                }
+            }
+            for q in &plan.questions {
+                let choice = match answer {
+                    Some(a) => a,
+                    None => ask(q),
+                };
+                if let Some(a) = choice.answer() {
+                    actions.extend(archive.resolve(q, a));
+                }
+            }
+            if !yes && !confirm("Procedo?") {
+                return Ok(());
+            }
+            let report = archive.apply(&actions, &mut |p| {
+                if !p.current.is_empty() {
+                    eprint!("\r[{}/{}] {:<60.60}", p.done + 1, p.total, p.current);
+                }
+            })?;
+            eprintln!();
+            println!(
+                "Fatto: {} azioni, {} byte copiati.",
+                report.done, report.bytes_copied
+            );
+            for s in &report.skipped {
+                println!("Saltato {}: {}", s.path, s.reason);
+            }
+        }
     }
     Ok(())
+}
+
+fn describe(action: &Action) -> Option<String> {
+    Some(match action {
+        Action::Copy { from, src, .. } => {
+            format!("copia {} → {}: {}", from, from.other(), src.path)
+        }
+        Action::Move { side, from, to, .. } => format!("sposta su {side}: {from} → {to}"),
+        Action::Delete { side, expect, .. } => format!("cancella da {side}: {}", expect.path),
+        Action::SetMtime { side, entry } => format!("allinea la data su {side}: {}", entry.path),
+        Action::MakeDir { side, path } => format!("crea su {side}: {path}/"),
+        Action::RemoveDir { side, path } => format!("cancella da {side}: {path}/"),
+        Action::Rename { side, from, to } => format!("rinomina su {side}: {from} → {to}"),
+        Action::Record { .. } | Action::Forget { .. } => return None,
+    })
+}
+
+fn ask(q: &Question) -> CliAnswer {
+    match q.kind {
+        QuestionKind::Deletion { deleted_on } => {
+            println!("\n{} è stato cancellato dal disco {deleted_on}.", q.path());
+            prompt(
+                "[d] cancella anche dall'altro  [r] rimetti  [s] decidi dopo",
+                &[
+                    ("d", CliAnswer::Delete),
+                    ("r", CliAnswer::Restore),
+                    ("s", CliAnswer::Skip),
+                ],
+            )
+        }
+        QuestionKind::Conflict => {
+            println!("\nConflitto su {}:", q.path());
+            for side in Side::BOTH {
+                match q.version(side) {
+                    Some(v) => println!("  {side}: {} byte", v.size),
+                    None => println!("  {side}: cancellato"),
+                }
+            }
+            prompt(
+                "[a] tieni A  [b] tieni B  [e] tienili entrambi  [s] decidi dopo",
+                &[
+                    ("a", CliAnswer::KeepA),
+                    ("b", CliAnswer::KeepB),
+                    ("e", CliAnswer::Both),
+                    ("s", CliAnswer::Skip),
+                ],
+            )
+        }
+    }
+}
+
+fn prompt(text: &str, choices: &[(&str, CliAnswer)]) -> CliAnswer {
+    loop {
+        print!("{text}: ");
+        let _ = std::io::stdout().flush();
+        let mut line = String::new();
+        if std::io::stdin().lock().read_line(&mut line).unwrap_or(0) == 0 {
+            return CliAnswer::Skip;
+        }
+        if let Some((_, a)) = choices.iter().find(|(k, _)| *k == line.trim()) {
+            return *a;
+        }
+    }
+}
+
+fn confirm(text: &str) -> bool {
+    print!("{text} [s/N] ");
+    let _ = std::io::stdout().flush();
+    let mut line = String::new();
+    std::io::stdin().lock().read_line(&mut line).is_ok() && line.trim().eq_ignore_ascii_case("s")
 }
 
 fn print_disks(archive: &Archive) {

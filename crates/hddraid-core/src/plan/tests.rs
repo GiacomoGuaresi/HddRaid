@@ -185,10 +185,8 @@ fn deletion_is_a_question() {
     );
     assert!(q.b.is_none());
     assert_eq!(q.path(), "x.jpg");
-
-    let empty = Scan::default();
     assert_eq!(
-        resolve(q, Answer::DeleteEverywhere, "Disco B", &empty),
+        resolve(q, Answer::DeleteEverywhere, "Disco B", &|_| false),
         [Action::Delete {
             side: Side::A,
             expect: info("x.jpg", 3, T),
@@ -196,7 +194,7 @@ fn deletion_is_a_question() {
         }]
     );
     assert_eq!(
-        resolve(q, Answer::Restore, "Disco B", &empty),
+        resolve(q, Answer::Restore, "Disco B", &|_| false),
         [Action::Copy {
             from: Side::A,
             src: info("x.jpg", 3, T),
@@ -243,7 +241,9 @@ fn different_new_files_are_a_conflict() {
     assert_eq!(q.a.as_ref().unwrap().hash.as_deref(), Some("ha"));
     assert_eq!(q.b.as_ref().unwrap().hash.as_deref(), Some("hb"));
 
-    let actions = resolve(q, Answer::KeepBoth, "Disco rosso", &b.scan);
+    let actions = resolve(q, Answer::KeepBoth, "Disco rosso", &|p| {
+        b.scan.files.contains_key(&paths::key(p))
+    });
     assert_eq!(
         actions,
         [
@@ -267,10 +267,19 @@ fn different_new_files_are_a_conflict() {
         ]
     );
     assert!(matches!(
-        &resolve(q, Answer::Keep(Side::B), "B", &b.scan)[..],
+        &resolve(q, Answer::Keep(Side::B), "B", &|p| b
+            .scan
+            .files
+            .contains_key(&paths::key(p)))[..],
         [Action::Copy { from: Side::B, .. }]
     ));
-    assert!(resolve(q, Answer::Restore, "B", &b.scan).is_empty());
+    assert!(
+        resolve(q, Answer::Restore, "B", &|p| b
+            .scan
+            .files
+            .contains_key(&paths::key(p)))
+        .is_empty()
+    );
 }
 
 #[test]
@@ -278,8 +287,20 @@ fn alt_name_avoids_existing_files() {
     let b = disk()
         .file("Foto/a.jpg", 1, T, "x")
         .file("Foto/a (B).jpg", 1, T, "y");
-    assert_eq!(alt_name("Foto/a.jpg", "B", &b.scan), "Foto/a (B 2).jpg");
-    assert_eq!(alt_name("LEGGIMI", "B", &b.scan), "LEGGIMI (B)");
+    assert_eq!(
+        alt_name("Foto/a.jpg", "B", &|p| b
+            .scan
+            .files
+            .contains_key(&paths::key(p))),
+        "Foto/a (B 2).jpg"
+    );
+    assert_eq!(
+        alt_name("LEGGIMI", "B", &|p| b
+            .scan
+            .files
+            .contains_key(&paths::key(p))),
+        "LEGGIMI (B)"
+    );
 }
 
 #[test]
@@ -309,13 +330,12 @@ fn deleted_versus_modified_is_a_conflict() {
     let q = &plan.questions[0];
     assert_eq!(q.kind, QuestionKind::Conflict);
     assert!(q.a.is_none());
-    let empty = Scan::default();
     assert!(matches!(
-        &resolve(q, Answer::Keep(Side::B), "B", &empty)[..],
+        &resolve(q, Answer::Keep(Side::B), "B", &|_| false)[..],
         [Action::Copy { from: Side::B, .. }]
     ));
     assert!(matches!(
-        &resolve(q, Answer::Keep(Side::A), "B", &empty)[..],
+        &resolve(q, Answer::Keep(Side::A), "B", &|_| false)[..],
         [Action::Delete { side: Side::B, .. }]
     ));
 }
@@ -435,16 +455,15 @@ fn empty_dirs() {
         }
     );
     let q = &plan.questions[0];
-    let empty = Scan::default();
     assert_eq!(
-        resolve(q, Answer::Restore, "B", &empty),
+        resolve(q, Answer::Restore, "B", &|_| false),
         [Action::MakeDir {
             side: Side::B,
             path: "2027".into()
         }]
     );
     assert_eq!(
-        resolve(q, Answer::DeleteEverywhere, "B", &empty),
+        resolve(q, Answer::DeleteEverywhere, "B", &|_| false),
         [Action::RemoveDir {
             side: Side::A,
             path: "2027".into()

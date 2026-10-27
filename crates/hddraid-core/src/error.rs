@@ -34,6 +34,13 @@ pub enum Error {
     #[error("è stato indicato due volte lo stesso disco")]
     SameDisk,
 
+    #[error("spazio insufficiente su {label}: servono {needed} byte, liberi {available}")]
+    NoSpace {
+        label: String,
+        needed: u64,
+        available: u64,
+    },
+
     #[error("{} è cambiato durante l'operazione", .0.display())]
     SourceChanged(PathBuf),
 
