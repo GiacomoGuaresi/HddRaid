@@ -38,7 +38,6 @@
       "text": "I tuoi file sono al sicuro su entrambi i dischi.",
       "lastSync": "Ultimo allineamento: {when}"
     },
-    "foreign": "{name} appartiene a un'altra coppia di dischi: non lo tocco.",
     "connected": {
       "title": "I dischi sono collegati",
       "text": "Copia i tuoi file su uno dei due dischi, come sempre. Quando hai finito, premi Allinea.",
@@ -51,9 +50,15 @@
     },
     "fresh": {
       "title": "{disk} è un disco nuovo",
-      "text": "Cliccalo per vedere cosa contiene e, se vuoi, usarlo al posto di {disk}."
+      "text": "Cliccalo per vedere cosa contiene e, se vuoi, usarlo al posto di {disk}.",
+      "noPair": "Collega anche uno dei tuoi dischi HddRaid per usarlo al posto di quello che manca."
     },
-    "clickHint": "Clicca su un disco per vedere le sue informazioni."
+    "clickHint": "Clicca su un disco per vedere le sue informazioni.",
+    "otherPair": {
+      "title": "{disk} appartiene a un'altra coppia",
+      "text": "Non lo tocco. Collega i tuoi dischi per allinearli.",
+      "replace": "Non lo tocco, a meno che tu non voglia formattarlo e usarlo al posto di {disk}: cliccalo."
+    }
   },
   "summary": {
     "title": "Ecco cosa farò",
@@ -242,13 +247,11 @@
     "checkNowHint": "Collega entrambi i dischi per controllarli.",
     "lastCheck": "Ultimo controllo: {when}",
     "neverChecked": "Non li hai ancora controllati.",
-    "broken": "Un disco si è rotto",
     "history": "Storico",
     "version": "Versione {version}",
     "title": "Impostazioni",
     "general": "Generale",
-    "disks": "Dischi",
-    "brokenSoon": "Arriverà presto."
+    "disks": "Dischi"
   },
   "history": {
     "empty": "Non è ancora successo niente.",
@@ -301,14 +304,13 @@
     "format": "Formatta",
     "formatAs": "Formatta e usa al posto di {disk}",
     "needOther": "Per formattarlo collega anche {disk}: servirà per ricopiarci i tuoi file.",
-    "twoOnly": "Per ora HddRaid usa due dischi: questo disco non serve.",
-    "needPair": "Collega anche uno dei tuoi dischi HddRaid per usarlo.",
     "confirm": {
       "title": "Tutto quello che c'è su {disk} verrà cancellato",
       "text": "Poi lo rimetto tra i tuoi dischi e, quando premi Allinea, ci ricopio i file da {other}.",
       "newName": "Nome del disco dopo la formattazione",
       "type": "Per confermare, scrivi il nome attuale del disco: {disk}",
-      "ok": "Formatta"
+      "ok": "Formatta",
+      "plain": "Diventerà un disco vuoto, in formato exFAT, che funziona su Windows e Mac."
     }
   }
 }

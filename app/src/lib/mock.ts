@@ -155,6 +155,11 @@ const SCENARIOS: Record<string, Partial<State>> = {
     disks: { A: null, B: null },
     others: [{ ...newDisk, other_pair: true }],
   },
+  "foreign-one": {
+    disks: { A: diskA, B: null },
+    others: [{ ...newDisk, other_pair: true }],
+  },
+  "new-disk-alone": { disks: { A: null, B: null }, others: [newDisk] },
   "new-disk": { disks: { A: diskA, B: null }, others: [newDisk] },
   comparing: { busy: { kind: "comparing" } },
   connected: {},
@@ -442,6 +447,23 @@ export function mockBackend(scenario: string): Backend {
     },
     async formatDisk(root, side, label) {
       emit({ busy: { kind: "formatting", label } });
+      if (side === null) {
+        setTimeout(() => {
+          const others = state.others.map((o) =>
+            o.root === root
+              ? {
+                  ...o,
+                  name: label,
+                  filesystem: "exfat",
+                  other_pair: false,
+                  free: o.total,
+                }
+              : o,
+          );
+          emit({ busy: null, others });
+        }, 1500);
+        return;
+      }
       setTimeout(() => {
         const disk: DiskView = {
           ...(side === "A" ? diskA : diskB),

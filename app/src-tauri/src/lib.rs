@@ -115,10 +115,15 @@ fn open_file(
     result.map_err(|e| e.to_string())
 }
 
-/// Formatta un volume in exFAT e lo mette nella coppia al posto del disco
-/// `side`. Cancella tutto il volume: l'interfaccia chiede conferma prima.
+/// Formatta un volume in exFAT e, con `side`, lo mette nella coppia al posto
+/// di quel disco. Cancella tutto il volume: l'interfaccia chiede conferma.
 #[tauri::command]
-fn format_disk(engine: Engine, root: String, side: Side, label: String) -> Result<(), String> {
+fn format_disk(
+    engine: Engine,
+    root: String,
+    side: Option<Side>,
+    label: String,
+) -> Result<(), String> {
     hddraid_core::volumes::check_label(&label).map_err(|e| format!("{e:?}"))?;
     engine.send(Cmd::Format {
         root: root.into(),

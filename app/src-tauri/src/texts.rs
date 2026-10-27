@@ -142,6 +142,16 @@ impl Texts {
         )
     }
 
+    pub fn formatted_plain(&self, label: &str) -> (String, String) {
+        (
+            self.pick(format!("{label} è pronto"), format!("{label} is ready")),
+            self.pick(
+                "Il disco è vuoto e formattato in exFAT.".into(),
+                "The drive is empty and formatted as exFAT.".into(),
+            ),
+        )
+    }
+
     pub fn connected(&self) -> (String, String) {
         (
             self.pick(

@@ -38,7 +38,6 @@
       "text": "Your files are safe on both drives.",
       "lastSync": "Last aligned: {when}"
     },
-    "foreign": "{name} belongs to another pair of drives: I won't touch it.",
     "connected": {
       "title": "Your drives are connected",
       "text": "Copy your files to either drive, as usual. When you're done, press Align.",
@@ -51,9 +50,15 @@
     },
     "fresh": {
       "title": "{disk} is a new drive",
-      "text": "Click it to see what's on it and, if you want, use it instead of {disk}."
+      "text": "Click it to see what's on it and, if you want, use it instead of {disk}.",
+      "noPair": "Connect one of your HddRaid drives too, to use it instead of the missing one."
     },
-    "clickHint": "Click a drive to see its details."
+    "clickHint": "Click a drive to see its details.",
+    "otherPair": {
+      "title": "{disk} belongs to another pair",
+      "text": "I won't touch it. Connect your drives to align them.",
+      "replace": "I won't touch it, unless you want to format it and use it instead of {disk}: click it."
+    }
   },
   "summary": {
     "title": "Here's what I'll do",
@@ -242,13 +247,11 @@
     "checkNowHint": "Connect both drives to check them.",
     "lastCheck": "Last check: {when}",
     "neverChecked": "You haven't checked them yet.",
-    "broken": "A drive broke",
     "history": "History",
     "version": "Version {version}",
     "title": "Settings",
     "general": "General",
-    "disks": "Drives",
-    "brokenSoon": "Coming soon."
+    "disks": "Drives"
   },
   "history": {
     "empty": "Nothing has happened yet.",
@@ -301,14 +304,13 @@
     "format": "Format",
     "formatAs": "Format and use instead of {disk}",
     "needOther": "To format it, connect {disk} too: I'll need it to copy your files back.",
-    "twoOnly": "For now HddRaid uses two drives: this one isn't needed.",
-    "needPair": "Connect one of your HddRaid drives too, to use it.",
     "confirm": {
       "title": "Everything on {disk} will be erased",
       "text": "Then I'll put it back with your drives and, when you press Align, copy your files from {other}.",
       "newName": "Drive name after formatting",
       "type": "To confirm, type the drive's current name: {disk}",
-      "ok": "Format"
+      "ok": "Format",
+      "plain": "It will become an empty drive, formatted as exFAT, which works on Windows and Mac."
     }
   }
 }

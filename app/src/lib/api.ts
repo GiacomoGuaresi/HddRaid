@@ -21,8 +21,9 @@ export interface Backend {
   settings(): Promise<Settings>;
   setSettings(settings: Settings): Promise<void>;
   renameDisk(side: Side, label: string): Promise<void>;
-  /** Formatta un volume e lo mette nella coppia al posto del disco `side`. */
-  formatDisk(root: string, side: Side, label: string): Promise<void>;
+  /** Formatta un volume e, con `side`, lo mette nella coppia al posto di
+   *  quel disco; con `null` resta un disco vuoto fuori dalla coppia. */
+  formatDisk(root: string, side: Side | null, label: string): Promise<void>;
   /** Apre un file di un disco, o lo mostra nella cartella con `reveal`. */
   openFile(side: Side, path: string, reveal: boolean): Promise<void>;
   history(): Promise<HistoryEvent[]>;

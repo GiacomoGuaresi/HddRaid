@@ -46,10 +46,11 @@ pub enum Cmd {
     Repair,
     Dismiss,
     Rename(Side, String),
-    /// Formatta il volume `root` e lo mette nella coppia come lato `side`.
+    /// Formatta il volume `root`; con `side` lo mette nella coppia al posto
+    /// di quel disco, altrimenti resta un disco vuoto qualsiasi.
     Format {
         root: PathBuf,
-        side: Side,
+        side: Option<Side>,
         label: String,
     },
     /// Le impostazioni sono cambiate (lingua, intervallo dei controlli).
@@ -736,13 +737,22 @@ impl Engine {
         self.reconnect();
     }
 
-    /// Formatta `root` e lo rimette nella coppia come lato `side`.
-    fn format(&mut self, root: &std::path::Path, side: Side, label: &str) {
+    /// Formatta `root` e, con `side`, lo rimette nella coppia al posto di
+    /// quel disco.
+    fn format(&mut self, root: &std::path::Path, side: Option<Side>, label: &str) {
+        // Solo volumi collegati davvero.
+        if !volumes::mounted().iter().any(|r| r == root) {
+            log::error!("formattazione rifiutata: {}", root.display());
+            return;
+        }
+        let Some(side) = side else {
+            return self.format_plain(root, label);
+        };
         let Some(other) = self.root(side.other()) else {
             return;
         };
-        // Solo volumi collegati davvero, e mai l'altro disco della coppia.
-        if root == other || !volumes::mounted().iter().any(|r| r == root) {
+        // Mai l'altro disco della coppia: serve per ricopiare i file.
+        if root == other {
             log::error!("formattazione rifiutata: {}", root.display());
             return;
         }
@@ -782,6 +792,39 @@ impl Engine {
                     s.busy = None;
                     s.outcome = Some(outcome);
                 });
+                self.reconnect();
+            }
+        }
+    }
+
+    /// Formatta un disco che non fa parte della coppia: resta vuoto, fuori
+    /// dalla coppia.
+    fn format_plain(&mut self, root: &std::path::Path, label: &str) {
+        // Un disco della coppia si formatta solo per rimetterlo nella coppia.
+        let in_pair = Side::BOTH
+            .iter()
+            .any(|s| self.root(*s).as_deref() == Some(root));
+        if in_pair {
+            log::error!("formattazione rifiutata: {} è della coppia", root.display());
+            return;
+        }
+        self.set(|s| {
+            s.busy = Some(Busy::Formatting {
+                label: label.to_string(),
+            })
+        });
+        let result = volumes::format_exfat(root, label);
+        self.set(|s| s.busy = None);
+        match result {
+            Ok(_) => {
+                log::info!("disco formattato: {label}");
+                self.reconnect();
+                self.notify(self.shared.texts().formatted_plain(label));
+            }
+            Err(e) => {
+                log::error!("formattazione non riuscita: {e}");
+                let outcome = self.error(&e.into());
+                self.set(|s| s.outcome = Some(outcome));
                 self.reconnect();
             }
         }

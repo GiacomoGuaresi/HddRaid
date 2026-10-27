@@ -6,7 +6,8 @@
 <script lang="ts">
   import { api, app, label, other } from "$lib/app.svelte";
   import Button from "$lib/components/Button.svelte";
-  import { HardDrive, TriangleAlert, X } from "$lib/components/icons";
+  import Popup from "$lib/components/Popup.svelte";
+  import { HardDrive, TriangleAlert } from "$lib/components/icons";
   import { bytes } from "$lib/format";
   import { t } from "$lib/i18n/index.svelte";
   import type { Side, VolumeView } from "$lib/types";
@@ -44,12 +45,13 @@
     const present = (["A", "B"] as Side[]).filter((x) => s.disks[x]);
     return present.length === 1 ? other(present[0]) : null;
   });
-  const formatBlocked = $derived.by(() => {
-    if (formatSide) return null;
-    if (target.kind === "pair") return t("disk.needOther", { disk: label(other(target.side)) });
-    if (s.disks.A && s.disks.B) return t("disk.twoOnly");
-    return t("disk.needPair");
-  });
+  /** Un disco della coppia si formatta solo con l'altro collegato, per
+   *  poterci ricopiare i file; gli altri dischi si formattano sempre. */
+  const formatBlocked = $derived(
+    target.kind === "pair" && !formatSide
+      ? t("disk.needOther", { disk: label(other(target.side)) })
+      : null,
+  );
 
   const fsText = $derived.by(() => {
     switch (info.filesystem) {
@@ -100,29 +102,19 @@
   const newNameError = $derived(labelError(newName));
 
   function startFormat() {
-    newName = formatSide ? label(formatSide).slice(0, 11) : "";
+    newName = (formatSide ? label(formatSide) : info.name).slice(0, 11);
     typed = "";
     confirming = true;
   }
 
   function format() {
-    if (!formatSide || newNameError || typed !== info.name) return;
+    if (formatBlocked || newNameError || typed !== info.name) return;
     api().formatDisk(info.root, formatSide, newName.trim());
     onclose();
   }
 </script>
 
-<div class="backdrop" role="presentation" onclick={onclose}>
-  <div
-    class="popup"
-    role="dialog"
-    aria-modal="true"
-    aria-label={info.name}
-    tabindex="-1"
-    onclick={(e) => e.stopPropagation()}
-    onkeydown={(e) => e.key === "Escape" && onclose()}
-  >
-    <button class="close" onclick={onclose} title={t("common.close")}><X size={20} /></button>
+<Popup label={info.name} {onclose}>
 
     {#if !confirming}
       <header>
@@ -165,21 +157,23 @@
       {/if}
 
       <div class="format">
-        {#if formatSide}
-          <Button variant="secondary" onclick={startFormat}>
-            {target.kind === "pair"
-              ? t("disk.format")
-              : t("disk.formatAs", { disk: label(formatSide) })}
-          </Button>
-        {:else}
+        {#if formatBlocked}
           <p class="muted hint">{formatBlocked}</p>
+        {:else}
+          <Button variant="secondary" onclick={startFormat}>
+            {target.kind === "volume" && formatSide
+              ? t("disk.formatAs", { disk: label(formatSide) })
+              : t("disk.format")}
+          </Button>
         {/if}
       </div>
     {:else}
       <span class="danger-icon"><TriangleAlert size={30} /></span>
       <h2 class="center">{t("disk.confirm.title", { disk: info.name })}</h2>
       <p class="muted center">
-        {t("disk.confirm.text", { other: label(other(formatSide!)) })}
+        {formatSide
+          ? t("disk.confirm.text", { other: label(other(formatSide)) })
+          : t("disk.confirm.plain")}
       </p>
 
       <label class="field">
@@ -203,49 +197,9 @@
         </Button>
       </div>
     {/if}
-  </div>
-</div>
+</Popup>
 
 <style>
-  .backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 10;
-    display: grid;
-    place-items: center;
-    background: rgb(20 15 10 / 40%);
-    animation: fade 0.2s var(--ease);
-  }
-  .popup {
-    position: relative;
-    width: min(440px, calc(100vw - 48px));
-    max-height: calc(100vh - 48px);
-    overflow-y: auto;
-    padding: 24px;
-    border-radius: var(--radius-large);
-    background: var(--surface);
-    box-shadow: var(--shadow);
-    display: grid;
-    gap: 16px;
-    animation: pop 0.25s var(--ease);
-  }
-  .close {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border: none;
-    border-radius: 50%;
-    background: none;
-    color: var(--text-muted);
-    cursor: pointer;
-  }
-  .close:hover {
-    background: var(--surface-2);
-  }
   header {
     display: flex;
     align-items: center;
@@ -342,16 +296,5 @@
     display: flex;
     justify-content: center;
     gap: 12px;
-  }
-  @keyframes fade {
-    from {
-      opacity: 0;
-    }
-  }
-  @keyframes pop {
-    from {
-      opacity: 0;
-      transform: scale(0.96);
-    }
   }
 </style>

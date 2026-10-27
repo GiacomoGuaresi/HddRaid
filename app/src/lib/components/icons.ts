@@ -5,6 +5,7 @@ export { default as ArrowLeft } from "@lucide/svelte/icons/arrow-left";
 export { default as ArrowRight } from "@lucide/svelte/icons/arrow-right";
 export { default as Check } from "@lucide/svelte/icons/check";
 export { default as ChevronDown } from "@lucide/svelte/icons/chevron-down";
+export { default as ChevronRight } from "@lucide/svelte/icons/chevron-right";
 export { default as CircleAlert } from "@lucide/svelte/icons/circle-alert";
 export { default as Copy } from "@lucide/svelte/icons/copy";
 export { default as Eject } from "@lucide/svelte/icons/eject";

@@ -22,11 +22,19 @@
   const missing = $derived(present === "A" ? "B" : "A");
   /** Confrontati e senza niente da fare. */
   const same = $derived(name === "connected" && s.compared);
-  /** Un disco nuovo collegato: si mostra al posto di quello che manca. */
-  const fresh = $derived(
-    name === "oneDisk" ? (s.others.find((o) => !o.other_pair) ?? null) : null,
-  );
-  const foreign = $derived(s.others.filter((o) => o.other_pair));
+  /** Gli altri dischi collegati (nuovi o di un'altra coppia) prendono il
+   *  posto di quelli che mancano, nell'ordine. */
+  const extras = $derived.by(() => {
+    const slots: Partial<Record<Side, VolumeView>> = {};
+    if (name !== "noDisks" && name !== "oneDisk") return slots;
+    const free = (["A", "B"] as Side[]).filter((x) => !s.disks[x]);
+    s.others.forEach((volume, i) => {
+      if (free[i]) slots[free[i]] = volume;
+    });
+    return slots;
+  });
+  /** Il primo disco in più, che dà il titolo alla schermata. */
+  const extra = $derived(extras.A ?? extras.B ?? null);
 
   type Target = { kind: "pair"; side: Side } | { kind: "volume"; volume: VolumeView };
   let selected = $state<Target | null>(null);
@@ -38,30 +46,38 @@
   });
 
   function select(side: Side) {
+    const volume = extras[side];
     if (s.disks[side]) selected = { kind: "pair", side };
-    else if (fresh) selected = { kind: "volume", volume: fresh };
+    else if (volume) selected = { kind: "volume", volume };
   }
 
   function diskState(side: Side) {
     if (same) return "ok";
     if (s.disks[side]) return "on";
-    return fresh ? "new" : "off";
+    const volume = extras[side];
+    if (volume) return volume.other_pair ? "other" : "new";
+    return "off";
   }
   function diskLabel(side: Side) {
-    return !s.disks[side] && fresh ? fresh.name : label(side);
+    return extras[side]?.name ?? label(side);
   }
 
   const title = $derived.by(() => {
     if (name === "formatting" && s.busy?.kind === "formatting") {
       return t("status.formatting.title", { disk: s.busy.label });
     }
-    if (name === "oneDisk" && fresh) return t("status.fresh.title", { disk: fresh.name });
+    if (extra?.other_pair) return t("status.otherPair.title", { disk: extra.name });
+    if (extra) return t("status.fresh.title", { disk: extra.name });
     if (name === "oneDisk") return t("status.oneDisk.title", { present: label(present) });
     if (same) return t("status.inSync.title");
     return t(`status.${name}.title`);
   });
   const text = $derived.by(() => {
-    if (name === "oneDisk" && fresh) return t("status.fresh.text", { disk: label(missing) });
+    if (extra && name === "noDisks") {
+      return t(extra.other_pair ? "status.otherPair.text" : "status.fresh.noPair");
+    }
+    if (extra?.other_pair) return t("status.otherPair.replace", { disk: label(missing) });
+    if (extra) return t("status.fresh.text", { disk: label(missing) });
     if (name === "oneDisk") {
       return t("status.oneDisk.text", { present: label(present), missing: label(missing) });
     }
@@ -78,7 +94,7 @@
       a={diskState("A")}
       b={diskState("B")}
       link={same ? "ok" : name === "comparing" || name === "formatting" ? "compare" : "none"}
-      onselect={name === "connected" || name === "oneDisk" ? select : undefined}
+      onselect={name === "connected" || name === "oneDisk" || extra ? select : undefined}
     />
   {/snippet}
 
@@ -92,12 +108,9 @@
       {#if s.last_check}{t("check.lastCheck", { when: relative(s.last_check) })}{/if}
     </p>
   {/if}
-  {#if name === "connected" || name === "oneDisk"}
+  {#if name === "connected" || name === "oneDisk" || extra}
     <p class="note hint">{t("status.clickHint")}</p>
   {/if}
-  {#each foreign as volume (volume.root)}
-    <p class="note warning">{t("status.foreign", { name: volume.name })}</p>
-  {/each}
 
   {#snippet actions()}
     {#if name === "connected"}

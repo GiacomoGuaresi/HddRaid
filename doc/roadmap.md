@@ -77,7 +77,7 @@ Vedi [flussi](flussi.md).
 |---|---|---|---|
 | 5.1 | Primo avvio e **preparazione dei dischi**: adozione e controllo del file system | `feat(ui): prepare disks` | ⬜ |
 | 5.2 | **Formattazione** exFAT guidata sui tre sistemi | `feat(app): exfat formatting` | ⬜ |
-| 5.3 | **Sostituzione** di un disco rotto | `feat(ui): replace disk` | ⬜ |
+| 5.3 | **Sostituzione** di un disco rotto: disco nuovo formattato dal popup del disco | `feat(ui): replace disk` | ✅ |
 | 5.4 | `Scarica HddRaid.html` sui dischi | `feat(core): download link file` | ✅ |
 
 ## M6 — Distribuzione → `v1.0.0`

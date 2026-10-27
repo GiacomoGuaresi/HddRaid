@@ -1,7 +1,7 @@
 <script lang="ts">
   import { app, screen, start } from "$lib/app.svelte";
   import { inTauri } from "$lib/api";
-  import { ArrowLeft, Settings as Gear } from "$lib/components/icons";
+  import { ArrowLeft } from "$lib/components/icons";
   import { t } from "$lib/i18n/index.svelte";
   import { SCENARIO_NAMES } from "$lib/mock";
   import { fade } from "svelte/transition";
@@ -10,7 +10,6 @@
   import Outcome from "$lib/screens/Outcome.svelte";
   import Progress from "$lib/screens/Progress.svelte";
   import Questions from "$lib/screens/Questions.svelte";
-  import Settings from "$lib/screens/Settings.svelte";
   import Status from "$lib/screens/Status.svelte";
   import Summary from "$lib/screens/Summary.svelte";
 
@@ -18,9 +17,7 @@
   // Con "riduci movimento" del sistema, le schermate cambiano senza dissolvenza.
   const still =
     typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const inSettings = $derived(
-    current === "settings" || current === "history" || current === "questions",
-  );
+  const inSubview = $derived(current === "history" || current === "questions");
 
   $effect(() => {
     start();
@@ -42,17 +39,13 @@
         {/each}
       </select>
     {/if}
-    {#if inSettings}
+    {#if inSubview}
       <button
         class="icon-button"
-        onclick={() => (app.view = app.view === "history" ? "settings" : "home")}
+        onclick={() => (app.view = "home")}
         title={t("common.back")}
       >
         <ArrowLeft size={22} />
-      </button>
-    {:else if current !== "loading" && current !== "welcome"}
-      <button class="icon-button" onclick={() => (app.view = "settings")} title={t("common.settings")}>
-        <Gear size={22} />
       </button>
     {/if}
   </header>
@@ -72,8 +65,6 @@
       <Outcome name={current} />
     {:else if current === "checkResult"}
       <Check name={current} />
-    {:else if current === "settings"}
-      <Settings />
     {:else if current === "history"}
       <History />
     {/if}

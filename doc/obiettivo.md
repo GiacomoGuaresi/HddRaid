@@ -49,8 +49,8 @@ Per chi usa **pochissimo il computer**. Ne segue che:
   - dischi nuovi: formattazione guidata in exFAT, con conferme esplicite;
   - dischi che uso già: l'app li **adotta** e il primo allineamento unisce i
     contenuti senza cancellare niente.
-- **Sostituire un disco rotto**: procedura guidata che prepara un disco nuovo e
-  ci copia tutto dal disco sano.
+- **Sostituire un disco rotto**: si collega un disco nuovo, lo si formatta dal
+  suo popup e al prossimo allineamento l'app ci copia tutto dal disco sano.
 - **Espellere i dischi** a fine lavoro, con un pulsante.
 
 Le regole precise sono in [sincronizzazione.md](sincronizzazione.md), le

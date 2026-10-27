@@ -4,9 +4,14 @@
   raccontano lo stato, con un'animazione per ciascuno.
 -->
 <script lang="ts">
+  import { inTauri } from "$lib/api";
+  import { t } from "$lib/i18n/index.svelte";
+  import SettingsPopup from "./SettingsPopup.svelte";
+
   /** off: scollegato; on: collegato; ok: allineato; warn: c'è un problema;
-   *  gone: appena espulso; new: un disco non ancora usato con HddRaid. */
-  type DiskState = "off" | "on" | "ok" | "warn" | "gone" | "new";
+   *  gone: appena espulso; new: un disco non ancora usato con HddRaid;
+   *  other: un disco di un'altra coppia. */
+  type DiskState = "off" | "on" | "ok" | "warn" | "gone" | "new" | "other";
 
   interface Props {
     a: DiskState;
@@ -22,6 +27,10 @@
   }
 
   let { a, b, labelA, labelB, link = "none", compact = false, onselect }: Props = $props();
+
+  // Il computer al centro apre le impostazioni dell'app.
+  // Demo nel browser: `&settings` lo apre subito.
+  let settingsOpen = $state(!inTauri && new URLSearchParams(location.search).has("settings"));
 
   // Cavi: dal portatile verso ciascun disco.
   const CABLE_A = "M152 110 C 112 110, 92 124, 92 162";
@@ -53,6 +62,18 @@
         <circle class="dot" cx="510" cy="462" r="36" />
         <circle class="led" cx="632" cy="462" r="36" />
       </g>
+      {#if clickable}
+        <!-- Ingranaggio: il disco si apre per vederne le informazioni. -->
+        <g class="gear">
+          <circle cx={x + 114} cy="166" r="13" />
+          <g class="art" transform="translate({x + 105} 157) scale(0.75)">
+            <path
+              d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"
+            />
+            <circle cx="12" cy="12" r="3" />
+          </g>
+        </g>
+      {/if}
     </g>
     <text class="label" x={x + 60} y="252">{label}</text>
   </g>
@@ -78,7 +99,16 @@
   {@render disk(a, 32, labelA, "a")}
   {@render disk(b, 308, labelB, "b")}
 
-  <!-- Portatile -->
+  <!-- Portatile: apre le impostazioni -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+  <g
+    class="clickable"
+    role="button"
+    tabindex="0"
+    aria-label={t("common.settings")}
+    onclick={() => (settingsOpen = true)}
+    onkeydown={(e) => e.key === "Enter" && (settingsOpen = true)}
+  >
   <g class="laptop">
     <!-- Schermo -->
     <rect class="lid" x="162" y="4" width="136" height="90" rx="10" />
@@ -133,7 +163,21 @@
       {/if}
     </g>
   </g>
+    <g class="gear">
+      <circle cx="296" cy="8" r="13" />
+      <g class="art" transform="translate(287 -1) scale(0.75)">
+        <path
+          d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"
+        />
+        <circle cx="12" cy="12" r="3" />
+      </g>
+    </g>
+  </g>
 </svg>
+
+{#if settingsOpen}
+  <SettingsPopup onclose={() => (settingsOpen = false)} />
+{/if}
 
 <style>
   .scene {
@@ -334,6 +378,29 @@
   .clickable:focus-visible .label {
     text-decoration: underline;
   }
+  .gear > circle {
+    fill: var(--surface);
+    stroke: var(--border-strong);
+    stroke-width: 1.5;
+    filter: drop-shadow(0 1px 2px rgb(60 40 20 / 15%));
+    transition: fill 0.2s var(--ease);
+  }
+  .gear .art * {
+    fill: none;
+    stroke: var(--text-muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .clickable:hover .gear > circle,
+  .clickable:focus-visible .gear > circle {
+    fill: var(--accent);
+    stroke: var(--accent);
+  }
+  .clickable:hover .gear .art *,
+  .clickable:focus-visible .gear .art * {
+    stroke: var(--on-accent);
+  }
   .new .panel {
     fill: var(--accent-soft);
   }
@@ -342,6 +409,15 @@
   }
   .new .label {
     fill: var(--accent);
+  }
+  .other .panel {
+    fill: var(--warning-soft);
+  }
+  .other .led {
+    fill: var(--warning);
+  }
+  .other .label {
+    fill: var(--warning);
   }
   .disk.b .body-group {
     animation-delay: 0.08s;

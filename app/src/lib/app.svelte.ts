@@ -5,7 +5,7 @@ import { backend, inTauri, type Backend } from "./api";
 import { setLanguage } from "./i18n/index.svelte";
 import type { Answer, State } from "./types";
 
-export type View = "home" | "questions" | "settings" | "history";
+export type View = "home" | "questions" | "history";
 
 export type ScreenName =
   | "loading"
@@ -23,7 +23,6 @@ export type ScreenName =
   | "checking"
   | "checkResult"
   | "error"
-  | "settings"
   | "history";
 
 export const app = $state<{
@@ -65,7 +64,7 @@ export async function start() {
 export function screen(): ScreenName {
   const s = app.state;
   if (!s) return "loading";
-  if (app.view === "settings" || app.view === "history") return app.view;
+  if (app.view === "history") return app.view;
   // Il benvenuto e la preparazione dei dischi arrivano con M5.
   if (!s.pair) return "noDisks";
 

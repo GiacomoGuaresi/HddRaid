@@ -1,18 +1,22 @@
-<!-- Impostazioni: poche voci, una sola schermata. -->
+<!--
+  Impostazioni dell'app, nel popup che si apre dal computer al centro. I nomi
+  dei dischi si cambiano dal popup di ciascun disco.
+-->
 <script lang="ts">
-  import { api, app, label } from "$lib/app.svelte";
-  import Button from "$lib/components/Button.svelte";
-  import { HeartPulse, History, HardDrive } from "$lib/components/icons";
-  import { relative } from "$lib/format";
+  import { api, app } from "$lib/app.svelte";
+  import Popup from "$lib/components/Popup.svelte";
+  import { ChevronRight, History, Settings as Gear } from "$lib/components/icons";
   import { setLanguage, t } from "$lib/i18n/index.svelte";
-  import type { Settings, Side } from "$lib/types";
+  import type { Settings } from "$lib/types";
+
+  interface Props {
+    onclose: () => void;
+  }
+
+  let { onclose }: Props = $props();
 
   let settings = $state<Settings | null>(null);
   let version = $state("");
-  const names = $state<Record<Side, string>>({ A: label("A"), B: label("B") });
-
-  const s = $derived(app.state!);
-  const both = $derived(Boolean(s.disks.A && s.disks.B) && !s.busy);
 
   $effect(() => {
     api().settings().then((v) => (settings = v));
@@ -26,19 +30,17 @@
     await api().setSettings($state.snapshot(settings));
   }
 
-  function rename(side: Side) {
-    const name = names[side].trim();
-    if (name && name !== label(side)) api().renameDisk(side, name);
-  }
-
-  function checkNow() {
-    app.view = "home";
-    api().startCheck();
+  function history() {
+    onclose();
+    app.view = "history";
   }
 </script>
 
-<section class="settings">
-  <h1>{t("settings.title")}</h1>
+<Popup label={t("settings.title")} {onclose}>
+  <header>
+    <span class="icon"><Gear size={26} /></span>
+    <h2>{t("settings.title")}</h2>
+  </header>
 
   {#if settings}
     <div class="group">
@@ -51,7 +53,7 @@
           onchange={(e) => save({ autostart: e.currentTarget.checked })}
         />
       </label>
-      <div class="row">
+      <div class="row column">
         <span>{t("settings.checkEvery")}</span>
         <div class="segmented">
           {#each [1, 3, 6] as const as months (months)}
@@ -68,7 +70,8 @@
         <span>{t("settings.language")}</span>
         <select
           value={settings.language ?? ""}
-          onchange={(e) => save({ language: (e.currentTarget.value || null) as Settings["language"] })}
+          onchange={(e) =>
+            save({ language: (e.currentTarget.value || null) as Settings["language"] })}
         >
           <option value="">{t("settings.languageAuto")}</option>
           <option value="it">Italiano</option>
@@ -78,84 +81,37 @@
     </div>
   {/if}
 
-  {#if s.pair}
-    <h2>{t("settings.disks")}</h2>
+  {#if app.state?.pair}
     <div class="group">
-      <div class="row column">
-        <span>{t("settings.names")}</span>
-        <span class="muted small">{t("settings.namesHint")}</span>
-        <div class="names">
-          {#each ["A", "B"] as const as side (side)}
-            <div class="name">
-              <HardDrive size={20} />
-              <input
-                bind:value={names[side]}
-                maxlength="11"
-                onblur={() => rename(side)}
-                onkeydown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-              />
-            </div>
-          {/each}
-        </div>
-      </div>
-      <div class="row">
-        <div class="column">
-          <span>{t("settings.checkNow")}</span>
-          <span class="muted small">
-            {#if !both}
-              {t("settings.checkNowHint")}
-            {:else if s.last_check}
-              {t("settings.lastCheck", { when: relative(s.last_check) })}
-            {:else}
-              {t("settings.neverChecked")}
-            {/if}
-          </span>
-        </div>
-        <Button disabled={!both} onclick={checkNow}>
-          <HeartPulse size={18} />
-          {t("check.due.start")}
-        </Button>
-      </div>
-      <button class="row link" onclick={() => (app.view = "history")}>
-        <span>{t("settings.history")}</span>
-        <History size={20} />
+      <button class="row link" onclick={history}>
+        <span class="with-icon"><History size={20} />{t("settings.history")}</span>
+        <ChevronRight size={20} />
       </button>
-      <div class="row">
-        <div class="column">
-          <span>{t("settings.broken")}</span>
-          <span class="muted small">{t("settings.brokenSoon")}</span>
-        </div>
-      </div>
     </div>
   {/if}
 
   <p class="version muted">{t("settings.version", { version })}</p>
-</section>
+</Popup>
 
 <style>
-  .settings {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 8px 40px 32px;
-    max-width: 680px;
-    width: 100%;
-    margin: 0 auto;
-    animation: enter 0.3s var(--ease);
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-right: 32px;
   }
-  h1 {
-    margin-bottom: 20px;
-  }
-  h2 {
-    margin: 28px 0 12px;
-    font-size: 15px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
+  .icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    flex: none;
+    border-radius: 14px;
+    background: var(--accent-soft);
+    color: var(--accent);
   }
   .group {
-    border-radius: var(--radius-large);
-    background: var(--surface);
+    border-radius: var(--radius);
     border: 1px solid var(--border);
     overflow: hidden;
   }
@@ -164,7 +120,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 16px 20px;
+    padding: 14px 16px;
     border: none;
     width: 100%;
     background: none;
@@ -174,33 +130,22 @@
     border-top: 1px solid var(--border);
   }
   .column {
-    display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 2px;
-  }
-  .small {
-    font-size: 14px;
+    gap: 10px;
   }
   .link {
     cursor: pointer;
+    color: var(--text);
   }
   .link:hover {
     background: var(--surface-2);
   }
-  .names {
-    display: flex;
-    gap: 12px;
-    margin-top: 10px;
-  }
-  .name {
-    flex: 1;
-    display: flex;
+  .with-icon {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    color: var(--text-muted);
+    gap: 10px;
   }
-  input:not([type]),
   select {
     font: inherit;
     color: var(--text);
@@ -209,10 +154,6 @@
     border-radius: var(--radius-small);
     padding: 8px 12px;
   }
-  .name input {
-    flex: 1;
-    min-width: 0;
-  }
   .segmented {
     display: flex;
     padding: 3px;
@@ -220,6 +161,7 @@
     background: var(--surface-2);
   }
   .segmented button {
+    flex: 1;
     border: none;
     background: none;
     padding: 6px 14px;
@@ -263,13 +205,7 @@
     transform: translateX(18px);
   }
   .version {
-    margin-top: 24px;
     text-align: center;
     font-size: 13px;
-  }
-  @keyframes enter {
-    from {
-      opacity: 0;
-    }
   }
 </style>

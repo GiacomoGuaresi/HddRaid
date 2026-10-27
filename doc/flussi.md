@@ -149,15 +149,20 @@ dischi adesso**.
 
 ## 7. Sostituire un disco rotto
 
-Da **Impostazioni → Un disco si è rotto**.
+Non c'è una procedura a parte: basta collegare il disco sano e un disco
+nuovo.
 
-1. "Quale disco si è rotto?" A / B.
-2. "Collega il disco sano e il disco nuovo."
-3. Formattazione del disco nuovo (come nel flusso 2).
-4. Copia di tutto dal disco sano, con verifica. Avanzamento, ripresa se
-   interrotta.
-5. "Fatto. Il nuovo disco B è pronto." Il vecchio disco viene dimenticato:
-   se viene ricollegato, l'app lo mostra come "disco sostituito" e non lo usa.
+1. Il disco nuovo compare al posto di quello mancante. Cliccandolo si apre
+   il popup del disco: nome, formato, spazio.
+2. **Formatta e usa al posto di Disco B**: si sceglie il nome del disco e
+   si conferma scrivendo il nome attuale. Il disco viene formattato in exFAT
+   e preparato come Disco B.
+3. Al prossimo **Allinea** l'app ci ricopia tutto dal disco sano, senza
+   domande.
+
+Lo stesso popup, su un disco della coppia, permette di rinominarlo e di
+formattarlo: dopo la formattazione torna nella coppia e viene riempito di
+nuovo dall'altro disco.
 
 ## 8. Casi particolari
 
@@ -176,6 +181,6 @@ Una sola schermata, poche voci:
 - Avvia HddRaid con il computer (sì di default)
 - Controllo completo ogni: 1 / 3 / 6 mesi
 - **Storico**: cosa è successo e quando
-- Controlla i dischi adesso · Un disco si è rotto
+- Controlla i dischi adesso
 - Nomi dei dischi
 - Lingua (automatica di default)
