@@ -8,8 +8,8 @@ export interface Backend {
   state(): Promise<State>;
   /** Chiama `listener` a ogni cambio di stato. */
   subscribe(listener: (state: State) => void): Promise<() => void>;
-  /** Confronta di nuovo i dischi, se collegati (all'apertura della finestra). */
-  refresh(): Promise<void>;
+  /** Confronta i dischi (Allinea): o sono uguali, o arriva il riepilogo. */
+  compare(): Promise<void>;
   sync(answers: Record<string, Answer>): Promise<void>;
   eject(): Promise<void>;
   startCheck(): Promise<void>;
@@ -21,6 +21,10 @@ export interface Backend {
   settings(): Promise<Settings>;
   setSettings(settings: Settings): Promise<void>;
   renameDisk(side: Side, label: string): Promise<void>;
+  /** Formatta un volume e lo mette nella coppia al posto del disco `side`. */
+  formatDisk(root: string, side: Side, label: string): Promise<void>;
+  /** Apre un file di un disco, o lo mostra nella cartella con `reveal`. */
+  openFile(side: Side, path: string, reveal: boolean): Promise<void>;
   history(): Promise<HistoryEvent[]>;
   version(): Promise<string>;
 }
@@ -36,7 +40,7 @@ function tauriBackend(): Backend {
       const { listen } = await import("@tauri-apps/api/event");
       return listen<State>("state", (e) => listener(e.payload));
     },
-    refresh: () => call("refresh"),
+    compare: () => call("compare"),
     sync: (answers) => call("sync", { answers }),
     eject: () => call("eject"),
     startCheck: () => call("start_check"),
@@ -47,6 +51,8 @@ function tauriBackend(): Backend {
     settings: () => call("get_settings"),
     setSettings: (settings) => call("set_settings", { settings }),
     renameDisk: (side, label) => call("rename_disk", { side, label }),
+    formatDisk: (root, side, label) => call("format_disk", { root, side, label }),
+    openFile: (side, path, reveal) => call("open_file", { side, path, reveal }),
     history: () => call("history"),
     version: () => call("core_version"),
   };
@@ -60,7 +66,7 @@ export function backend(): Promise<Backend> {
   instance ??= inTauri
     ? Promise.resolve(tauriBackend())
     : import("./mock").then((m) =>
-        m.mockBackend(new URLSearchParams(location.search).get("demo") ?? "summary"),
+        m.mockBackend(new URLSearchParams(location.search).get("demo") ?? "connected"),
       );
   return instance;
 }

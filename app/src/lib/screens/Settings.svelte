@@ -90,7 +90,7 @@
               <HardDrive size={20} />
               <input
                 bind:value={names[side]}
-                maxlength="40"
+                maxlength="11"
                 onblur={() => rename(side)}
                 onkeydown={(e) => e.key === "Enter" && e.currentTarget.blur()}
               />

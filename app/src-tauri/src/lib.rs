@@ -33,8 +33,8 @@ fn get_state(engine: Engine) -> view::State {
 }
 
 #[tauri::command]
-fn refresh(engine: Engine) {
-    engine.send(Cmd::Refresh);
+fn compare(engine: Engine) {
+    engine.send(Cmd::Compare);
 }
 
 #[tauri::command]
@@ -75,8 +75,57 @@ fn dismiss(engine: Engine) {
 }
 
 #[tauri::command]
-fn rename_disk(engine: Engine, side: Side, label: String) {
+fn rename_disk(engine: Engine, side: Side, label: String) -> Result<(), String> {
+    hddraid_core::volumes::check_label(&label).map_err(|e| format!("{e:?}"))?;
     engine.send(Cmd::Rename(side, label));
+    Ok(())
+}
+
+/// Apre un file di un disco (o lo mostra nella sua cartella), per capire
+/// di quale file parla una domanda.
+#[tauri::command]
+fn open_file(
+    app: AppHandle,
+    engine: Engine,
+    side: Side,
+    path: String,
+    reveal: bool,
+) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+    // Il percorso arriva dall'interfaccia: deve restare dentro il disco.
+    if path.split('/').any(|part| part == ".." || part.is_empty()) {
+        return Err("percorso non valido".into());
+    }
+    let root = engine
+        .state
+        .lock()
+        .unwrap()
+        .disks
+        .get(&side)
+        .cloned()
+        .flatten()
+        .map(|d| d.root)
+        .ok_or("disco non collegato")?;
+    let full = hddraid_core::paths::native(std::path::Path::new(&root), &path);
+    let result = if reveal {
+        app.opener().reveal_item_in_dir(&full)
+    } else {
+        app.opener().open_path(full.to_string_lossy(), None::<&str>)
+    };
+    result.map_err(|e| e.to_string())
+}
+
+/// Formatta un volume in exFAT e lo mette nella coppia al posto del disco
+/// `side`. Cancella tutto il volume: l'interfaccia chiede conferma prima.
+#[tauri::command]
+fn format_disk(engine: Engine, root: String, side: Side, label: String) -> Result<(), String> {
+    hddraid_core::volumes::check_label(&label).map_err(|e| format!("{e:?}"))?;
+    engine.send(Cmd::Format {
+        root: root.into(),
+        side,
+        label,
+    });
+    Ok(())
 }
 
 #[tauri::command]
@@ -190,7 +239,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             core_version,
             get_state,
-            refresh,
+            compare,
             sync,
             eject,
             start_check,
@@ -199,6 +248,8 @@ pub fn run() {
             repair,
             dismiss,
             rename_disk,
+            open_file,
+            format_disk,
             history,
             get_settings,
             set_settings,

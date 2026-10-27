@@ -366,6 +366,14 @@ impl Tx<'_> {
         Ok(())
     }
 
+    /// Svuota la base: il prossimo allineamento sarà un'adozione, che unisce
+    /// i dischi senza cancellare niente.
+    pub fn clear_base(&self) -> Result<()> {
+        self.0.execute("DELETE FROM files", [])?;
+        self.0.execute("DELETE FROM verified", [])?;
+        Ok(())
+    }
+
     pub fn set_verified(&self, key: &str, disk_id: &str, at: &str) -> Result<()> {
         self.0.execute(
             "INSERT INTO verified (key, disk_id, at) VALUES (?1, ?2, ?3)

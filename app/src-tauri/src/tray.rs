@@ -50,6 +50,7 @@ fn status(state: &State, texts: &Texts) -> (Dot, String) {
             return (Dot::Teal, texts.checking(progress.percent()));
         }
         Some(Busy::Comparing) => return (Dot::Teal, texts.comparing()),
+        Some(Busy::Formatting { label }) => return (Dot::Teal, texts.formatting(label)),
         Some(Busy::Ejecting) | None => {}
     }
     let present: Vec<_> = state
@@ -63,7 +64,8 @@ fn status(state: &State, texts: &Texts) -> (Dot, String) {
         _ => match &state.summary {
             Some(s) if !s.questions.is_empty() => (Dot::Red, texts.questions(s.questions.len())),
             Some(s) => (Dot::Teal, texts.to_align(s.changes())),
-            None => (Dot::Green, texts.in_sync()),
+            None if state.compared => (Dot::Green, texts.in_sync()),
+            None => (Dot::Teal, texts.connected().0),
         },
     }
 }

@@ -24,23 +24,21 @@ use crate::settings::{Config, KnownDisk, Pair};
 use crate::texts::{Lang, Texts};
 use crate::view::{
     self, AnswerView, Busy, DiskView, ErrorCode, HistoryEvent, Outcome, PairView, ProgressView,
-    RepairView, SkippedView, State,
+    RepairView, SkippedView, State, VolumeView,
 };
 
 /// Ogni quanto guardare i volumi collegati.
 const POLL: Duration = Duration::from_secs(2);
 /// Ogni quanto, al massimo, pubblicare l'avanzamento.
 const PROGRESS_EVERY: Duration = Duration::from_millis(150);
-/// Un nuovo confronto su richiesta non prima di questo intervallo.
-const REFRESH_MIN: Duration = Duration::from_secs(5);
 /// "Più tardi" sul controllo completo.
 const POSTPONE: chrono::Duration = chrono::Duration::days(7);
 /// Velocità di lettura stimata di un disco esterno, per il controllo completo.
 const READ_SPEED: u64 = 100_000_000;
 
 pub enum Cmd {
-    /// Confronta di nuovo i dischi, se collegati e liberi.
-    Refresh,
+    /// Confronta i dischi, se collegati e liberi (Allinea).
+    Compare,
     Sync(BTreeMap<String, AnswerView>),
     Eject,
     StartCheck,
@@ -48,6 +46,12 @@ pub enum Cmd {
     Repair,
     Dismiss,
     Rename(Side, String),
+    /// Formatta il volume `root` e lo mette nella coppia come lato `side`.
+    Format {
+        root: PathBuf,
+        side: Side,
+        label: String,
+    },
     /// Le impostazioni sono cambiate (lingua, intervallo dei controlli).
     Settings,
 }
@@ -129,7 +133,8 @@ pub fn start(app: AppHandle, config_dir: PathBuf, work_dir: PathBuf) -> Arc<Shar
         repairs: Vec::new(),
         present: [None, None],
         ejected: HashSet::new(),
-        last_compare: None,
+        volumes: BTreeMap::new(),
+        quiet: false,
     };
     std::thread::Builder::new()
         .name("engine".into())
@@ -157,7 +162,11 @@ struct Engine {
     present: [Option<String>; 2],
     /// Volumi espulsi: si ignorano finché restano montati.
     ejected: HashSet<PathBuf>,
-    last_compare: Option<Instant>,
+    /// Nome, file system e spazio dei volumi, letti una volta per volume.
+    volumes: BTreeMap<PathBuf, (volumes::VolumeInfo, (u64, u64))>,
+    /// Il prossimo collegamento è dovuto a una rinomina o a una
+    /// formattazione: niente notifica.
+    quiet: bool,
 }
 
 impl Engine {
@@ -174,12 +183,7 @@ impl Engine {
 
     fn handle(&mut self, cmd: Cmd) {
         match cmd {
-            Cmd::Refresh => {
-                let recent = self.last_compare.is_some_and(|t| t.elapsed() < REFRESH_MIN);
-                if self.archive.is_some() && !self.busy() && !recent {
-                    self.compare(false);
-                }
-            }
+            Cmd::Compare => self.compare(),
             Cmd::Sync(answers) => self.sync(answers),
             Cmd::Eject => self.eject(),
             Cmd::StartCheck => self.check(),
@@ -191,6 +195,7 @@ impl Engine {
             Cmd::Repair => self.repair(),
             Cmd::Dismiss => self.set(|s| s.outcome = None),
             Cmd::Rename(side, label) => self.rename(side, &label),
+            Cmd::Format { root, side, label } => self.format(&root, side, &label),
             Cmd::Settings => {
                 let due = self.check_due();
                 self.set(|s| s.check_due = due);
@@ -260,31 +265,56 @@ impl Engine {
             })
             .collect();
 
-        let pair = self.adopt_pair(&disks);
-        let mut found: [Option<&Disk>; 2] = [None, None];
-        let mut foreign = Vec::new();
-        for disk in &disks {
-            match &pair {
-                Some(p) if disk.identity().archive_id == p.archive_id => {
-                    found[disk.side() as usize] = Some(disk);
-                }
-                _ => foreign.push(volume_name(disk)),
+        // Nome e spazio si leggono solo per i volumi appena comparsi.
+        self.volumes.retain(|r, _| roots.contains(r));
+        for root in &roots {
+            if !self.volumes.contains_key(root) {
+                let info = volumes::info(root);
+                let space = volumes::space(root).unwrap_or((0, 0));
+                self.volumes.insert(root.clone(), (info, space));
             }
         }
-        foreign.sort();
+
+        let pair = self.adopt_pair(&disks);
+        let mut found: [Option<&Disk>; 2] = [None, None];
+        for disk in &disks {
+            if let Some(p) = &pair
+                && disk.identity().archive_id == p.archive_id
+            {
+                found[disk.side() as usize] = Some(disk);
+            }
+        }
+        let others: Vec<VolumeView> = roots
+            .iter()
+            .filter(|r| !self.ejected.contains(*r))
+            .filter(|r| !found.iter().flatten().any(|d| d.root() == r.as_path()))
+            .filter_map(|r| {
+                let (info, (total, free)) = self.volumes.get(r)?;
+                Some(VolumeView {
+                    root: r.to_string_lossy().into_owned(),
+                    name: info.name.clone(),
+                    filesystem: info.filesystem.clone(),
+                    total: *total,
+                    free: *free,
+                    other_pair: disks.iter().any(|d| d.root() == r.as_path()),
+                })
+            })
+            .collect();
 
         let ids = found.map(|d| d.map(|d| d.id().to_string()));
         let changed = ids != self.present;
         let previous = std::mem::replace(&mut self.present, ids);
-        let views = found.map(|d| d.map(disk_view));
+        let views = found.map(|d| d.map(|d| self.disk_view(d)));
+        self.sync_labels(&views);
         self.set(|s| {
-            s.foreign = foreign;
+            s.others = others;
             if changed {
                 s.disks = Side::BOTH
                     .map(|side| (side, views[side as usize].clone()))
                     .into_iter()
                     .collect();
                 s.summary = None;
+                s.compared = false;
                 // Un esito vecchio non ha senso con dischi appena collegati;
                 // a dischi scollegati resta ("Puoi scollegare i dischi").
                 if found.iter().any(Option::is_some) {
@@ -299,12 +329,13 @@ impl Engine {
         self.archive = None;
         self.plan = None;
         self.repairs.clear();
-        match found {
-            [Some(_), Some(_)] => self.compare(true),
-            [Some(d), None] | [None, Some(d)] if previous.iter().all(Option::is_none) => {
+        let quiet = std::mem::take(&mut self.quiet);
+        match &views {
+            [Some(_), Some(_)] => self.connect(quiet),
+            [Some(d), None] | [None, Some(d)] if previous.iter().all(Option::is_none) && !quiet => {
                 let p = pair.as_ref().unwrap();
-                let missing = p.label(d.side().other()).to_string();
-                self.notify(self.shared.texts().one_connected(d.label(), &missing));
+                let missing = p.label(d.side.other()).to_string();
+                self.notify(self.shared.texts().one_connected(&d.label, &missing));
             }
             _ => {}
         }
@@ -334,50 +365,38 @@ impl Engine {
         Some(pair)
     }
 
-    // --- Confronto ---------------------------------------------------------
+    // --- Collegamento e confronto ------------------------------------------
 
-    /// Apre la coppia (se serve) e calcola cosa c'è da fare. `connected`:
-    /// i dischi sono appena stati collegati, quindi si avvisa l'utente.
-    fn compare(&mut self, connected: bool) {
-        self.last_compare = Some(Instant::now());
-        self.set(|s| s.busy = Some(Busy::Comparing));
-        match self.try_compare() {
-            Ok(()) => {}
-            Err(e) => {
-                log::error!("confronto non riuscito: {e}");
-                self.archive = None;
-                let outcome = self.error(&e);
-                self.set(|s| {
-                    s.busy = None;
-                    s.outcome = Some(outcome);
-                });
-                return;
-            }
+    /// I due dischi sono appena stati collegati: apre la coppia e legge le
+    /// date dell'indice, senza guardare i file. Il confronto parte solo
+    /// quando l'utente preme Allinea.
+    fn connect(&mut self, quiet: bool) {
+        if let Err(e) = self.open_archive() {
+            log::error!("coppia non aperta: {e}");
+            let outcome = self.error(&e);
+            self.set(|s| s.outcome = Some(outcome));
+            return;
         }
-        let state = self.shared.state.lock().unwrap().clone();
-        if !connected {
+        if quiet {
             return;
         }
         let texts = self.shared.texts();
-        match &state.summary {
-            Some(summary) => {
-                self.notify(texts.ready(summary.changes(), summary.questions.len()));
-                crate::show_window(&self.app);
-            }
-            None if state.check_due => {
-                self.notify(texts.check_due());
-                crate::show_window(&self.app);
-            }
-            None => self.notify(texts.already_same()),
-        }
+        let due = self.shared.state.lock().unwrap().check_due;
+        self.notify(if due {
+            texts.check_due()
+        } else {
+            texts.connected()
+        });
     }
 
-    fn try_compare(&mut self) -> hddraid_core::Result<()> {
+    /// Apre la coppia, se serve, e aggiorna date e stato dei dischi.
+    fn open_archive(&mut self) -> hddraid_core::Result<()> {
         if self.archive.is_none() {
             let roots = self.roots().ok_or(Error::DifferentArchives)?;
             let archive = Archive::open(&roots[0], &roots[1], &self.shared.work_dir)?;
             if !archive.open_info().interrupted.is_empty() {
-                // Rifare il piano sistema da solo le operazioni interrotte.
+                // Il prossimo confronto sistema da solo le operazioni
+                // interrotte.
                 log::info!(
                     "operazioni interrotte: {}",
                     archive.open_info().interrupted.len()
@@ -385,6 +404,69 @@ impl Engine {
             }
             self.archive = Some(archive);
         }
+        // Il nome vero è quello del volume: `disk.json` e l'indice lo seguono,
+        // anche se il disco è stato rinominato da Finder o Esplora file.
+        let names = Side::BOTH.map(|s| {
+            let disk = self.archive.as_ref().unwrap().disk(s);
+            self.disk_view(disk).label
+        });
+        let archive = self.archive.as_mut().unwrap();
+        for side in Side::BOTH {
+            let name = &names[side as usize];
+            if archive.disk(side).label() != name {
+                archive.disk_mut(side).set_label(name)?;
+                let id = archive.disk(side).id().to_string();
+                archive.index_mut().update(|tx| tx.add_disk(&id, name))?;
+                archive.save()?;
+            }
+        }
+        let archive = self.archive.as_ref().unwrap();
+        let total_bytes: u64 = archive
+            .index()
+            .base()?
+            .values()
+            .filter(|e| e.kind == Kind::File)
+            .map(|e| e.size)
+            .sum();
+        let last_sync = archive.index().meta("last_sync")?;
+        let last_check = archive.index().meta("last_full_check")?;
+        let views = Side::BOTH.map(|s| self.disk_view(archive.disk(s)));
+        let due = self.check_due();
+        self.set(|s| {
+            s.disks = Side::BOTH
+                .map(|side| (side, Some(views[side as usize].clone())))
+                .into_iter()
+                .collect();
+            s.last_sync = last_sync;
+            s.last_check = last_check;
+            s.check_due = due;
+            s.check_estimate = Some(total_bytes / READ_SPEED);
+        });
+        Ok(())
+    }
+
+    /// Confronta i dischi (Allinea): o sono già uguali, o c'è un riepilogo.
+    fn compare(&mut self) {
+        if self.roots().is_none() || self.busy() {
+            return;
+        }
+        self.set(|s| {
+            s.busy = Some(Busy::Comparing);
+            s.outcome = None;
+        });
+        if let Err(e) = self.try_compare() {
+            log::error!("confronto non riuscito: {e}");
+            self.archive = None;
+            let outcome = self.error(&e);
+            self.set(|s| {
+                s.busy = None;
+                s.outcome = Some(outcome);
+            });
+        }
+    }
+
+    fn try_compare(&mut self) -> hddraid_core::Result<()> {
+        self.open_archive()?;
         let archive = self.archive.as_ref().unwrap();
         let plan = archive.plan()?;
         let base = archive.index().base()?;
@@ -394,27 +476,11 @@ impl Engine {
                 .unwrap_or(u64::MAX)
         });
         let summary = view::summary(&plan, &base, free);
-        let total_bytes: u64 = base
-            .values()
-            .filter(|e| e.kind == Kind::File)
-            .map(|e| e.size)
-            .sum();
-        let last_sync = archive.index().meta("last_sync")?;
-        let last_check = archive.index().meta("last_full_check")?;
-        let views = Side::BOTH.map(|s| disk_view(archive.disk(s)));
         self.plan = Some(plan);
-        let due = self.check_due();
         self.set(|s| {
             s.busy = None;
-            s.disks = Side::BOTH
-                .map(|side| (side, Some(views[side as usize].clone())))
-                .into_iter()
-                .collect();
             s.summary = (!summary.is_empty()).then_some(summary);
-            s.last_sync = last_sync;
-            s.last_check = last_check;
-            s.check_due = due;
-            s.check_estimate = Some(total_bytes / READ_SPEED);
+            s.compared = true;
         });
         Ok(())
     }
@@ -520,7 +586,12 @@ impl Engine {
     // --- Controllo completo ------------------------------------------------
 
     fn check(&mut self) {
-        if self.archive.is_none() {
+        if self.roots().is_none() || self.busy() {
+            return;
+        }
+        if let Err(e) = self.open_archive() {
+            let outcome = self.error(&e);
+            self.set(|s| s.outcome = Some(outcome));
             return;
         }
         self.shared.cancel.store(false, Ordering::Relaxed);
@@ -634,44 +705,159 @@ impl Engine {
             s.busy = None;
             s.disks = Side::BOTH.map(|side| (side, None)).into_iter().collect();
             s.summary = None;
+            s.compared = false;
             s.outcome = Some(Outcome::Ejected);
         });
         self.notify(self.shared.texts().ejected());
     }
 
+    /// Rinomina il disco: il volume vero, che è il nome che si vede in
+    /// Esplora file / Finder. Un disco simulato cambia solo `disk.json`.
     fn rename(&mut self, side: Side, label: &str) {
         let label = label.trim();
-        if label.is_empty() {
+        let Some(root) = self.root(side) else {
             return;
-        }
-        let result = match self.archive.as_mut() {
-            Some(archive) => archive.disk_mut(side).set_label(label).and_then(|()| {
-                let id = archive.disk(side).id().to_string();
-                archive.index_mut().update(|tx| tx.add_disk(&id, label))?;
-                archive.save()
-            }),
-            None => Ok(()),
         };
+        let result = Disk::open(&root).and_then(|mut disk| {
+            disk.set_label(label)?;
+            if !volumes::is_dev_disk(&root) {
+                volumes::rename(&root, label)?;
+            }
+            Ok(())
+        });
         if let Err(e) = result {
             log::error!("nome non cambiato: {e}");
             let outcome = self.error(&e);
             self.set(|s| s.outcome = Some(outcome));
             return;
         }
+        // Il volume rinominato può comparire in un'altra cartella: si
+        // ricollega da capo, senza notifiche.
+        self.reconnect();
+    }
+
+    /// Formatta `root` e lo rimette nella coppia come lato `side`.
+    fn format(&mut self, root: &std::path::Path, side: Side, label: &str) {
+        let Some(other) = self.root(side.other()) else {
+            return;
+        };
+        // Solo volumi collegati davvero, e mai l'altro disco della coppia.
+        if root == other || !volumes::mounted().iter().any(|r| r == root) {
+            log::error!("formattazione rifiutata: {}", root.display());
+            return;
+        }
+        self.set(|s| {
+            s.busy = Some(Busy::Formatting {
+                label: label.to_string(),
+            })
+        });
+        self.archive = None;
+        self.plan = None;
+        let result = volumes::format_exfat(root, label)
+            .map_err(Error::from)
+            .and_then(|new_root| {
+                Archive::rejoin(&new_root, &other, side, label, &self.shared.work_dir)
+            });
+        match result {
+            Ok(archive) => {
+                log::info!("disco {side} formattato e rimesso nella coppia: {label}");
+                let id = archive.disk(side).id().to_string();
+                drop(archive);
+                self.update_config(|c| {
+                    if let Some(pair) = c.pair.as_mut() {
+                        pair.disks[side as usize] = KnownDisk {
+                            id,
+                            label: label.to_string(),
+                        };
+                    }
+                });
+                self.set(|s| s.busy = None);
+                self.reconnect();
+                self.notify(self.shared.texts().formatted(label));
+            }
+            Err(e) => {
+                log::error!("formattazione non riuscita: {e}");
+                let outcome = self.error(&e);
+                self.set(|s| {
+                    s.busy = None;
+                    s.outcome = Some(outcome);
+                });
+                self.reconnect();
+            }
+        }
+    }
+
+    /// Dimentica i dischi collegati: il prossimo controllo li ritrova, anche
+    /// se hanno cambiato nome o cartella, senza notifiche.
+    fn reconnect(&mut self) {
+        self.archive = None;
+        self.plan = None;
+        self.present = [None, None];
+        self.volumes.clear();
+        self.quiet = true;
+        self.poll();
+    }
+
+    /// I nomi della coppia seguono quelli dei volumi.
+    fn sync_labels(&self, views: &[Option<DiskView>; 2]) {
+        let changed: Vec<(Side, String)> = {
+            let config = self.shared.config.lock().unwrap();
+            let Some(pair) = config.pair.as_ref() else {
+                return;
+            };
+            views
+                .iter()
+                .flatten()
+                .filter(|v| pair.label(v.side) != v.label)
+                .map(|v| (v.side, v.label.clone()))
+                .collect()
+        };
+        if changed.is_empty() {
+            return;
+        }
         self.update_config(|c| {
             if let Some(pair) = c.pair.as_mut() {
-                pair.disks[side as usize].label = label.to_string();
+                for (side, label) in &changed {
+                    pair.disks[*side as usize].label = label.clone();
+                }
             }
         });
-        let label = label.to_string();
         self.set(|s| {
             if let Some(pair) = s.pair.as_mut() {
-                pair.labels.insert(side, label.clone());
-            }
-            if let Some(Some(disk)) = s.disks.get_mut(&side) {
-                disk.label = label;
+                for (side, label) in &changed {
+                    pair.labels.insert(*side, label.clone());
+                }
             }
         });
+    }
+
+    fn root(&self, side: Side) -> Option<PathBuf> {
+        let state = self.shared.state.lock().unwrap();
+        let disk = state.disks.get(&side)?.as_ref()?;
+        Some(PathBuf::from(&disk.root))
+    }
+
+    fn disk_view(&self, disk: &Disk) -> DiskView {
+        let root = disk.root().to_path_buf();
+        let (info, (total, free)) = self.volumes.get(&root).cloned().unwrap_or_else(|| {
+            (
+                volumes::info(&root),
+                volumes::space(&root).unwrap_or((0, 0)),
+            )
+        });
+        DiskView {
+            side: disk.side(),
+            // Un disco simulato non ha un volume: il nome resta in `disk.json`.
+            label: if volumes::is_dev_disk(&root) {
+                disk.label().to_string()
+            } else {
+                info.name
+            },
+            root: root.to_string_lossy().into_owned(),
+            filesystem: info.filesystem,
+            total,
+            free,
+        }
     }
 
     /// Un errore, con il motivo più probabile per l'utente.
@@ -707,25 +893,6 @@ impl Engine {
             .find(|(_, l)| l.as_str() == label)
             .map(|(s, _)| *s)
     }
-}
-
-fn disk_view(disk: &Disk) -> DiskView {
-    let (total, free) = volumes::space(disk.root()).unwrap_or((0, 0));
-    DiskView {
-        side: disk.side(),
-        label: disk.label().to_string(),
-        root: disk.root().to_string_lossy().into_owned(),
-        total,
-        free,
-    }
-}
-
-/// Il nome del volume, come lo mostra Esplora file / Finder.
-fn volume_name(disk: &Disk) -> String {
-    disk.root()
-        .file_name()
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_else(|| disk.root().to_string_lossy().into_owned())
 }
 
 fn skipped(list: &[hddraid_core::sync::Skipped]) -> Vec<SkippedView> {

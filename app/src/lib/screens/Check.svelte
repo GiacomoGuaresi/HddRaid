@@ -5,12 +5,11 @@
   import Disks from "$lib/components/Disks.svelte";
   import Screen from "$lib/components/Screen.svelte";
   import { Wrench } from "$lib/components/icons";
-  import { duration } from "$lib/format";
   import { t } from "$lib/i18n/index.svelte";
   import type { Side } from "$lib/types";
 
   interface Props {
-    name: "checkDue" | "checkResult";
+    name: "checkResult";
   }
 
   let { name }: Props = $props();
@@ -28,24 +27,7 @@
   );
 </script>
 
-{#if name === "checkDue"}
-  <Screen
-    title={t("check.due.title")}
-    text={s.check_estimate !== null
-      ? t("check.due.text", { time: duration(Math.max(s.check_estimate, 60)) })
-      : t("check.due.textUnknown")}
-  >
-    {#snippet hero()}
-      <Disks labelA={label("A")} labelB={label("B")} a="on" b="on" link="check" />
-    {/snippet}
-    {#snippet actions()}
-      <Button variant="ghost" onclick={() => api().postponeCheck()}>{t("check.due.later")}</Button>
-      <Button variant="primary" size="large" onclick={() => api().startCheck()}>
-        {t("check.due.start")}
-      </Button>
-    {/snippet}
-  </Screen>
-{:else if outcome?.kind === "repaired"}
+{#if outcome?.kind === "repaired"}
   <Screen title={t("check.healthy")} text={t("check.repaired", { count: outcome.done })} tone="success">
     {#snippet hero()}
       <Disks labelA={label("A")} labelB={label("B")} a="ok" b="ok" link="ok" />

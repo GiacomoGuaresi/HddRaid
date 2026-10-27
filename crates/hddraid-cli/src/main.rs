@@ -13,7 +13,7 @@ use std::process::ExitCode;
 use clap::ValueEnum;
 use clap::{Parser, Subcommand};
 use hddraid_core::plan::{Action, Answer, Question, QuestionKind};
-use hddraid_core::{Archive, Side, scan};
+use hddraid_core::{Archive, Disk, Side, scan, volumes};
 
 #[derive(Parser)]
 #[command(name = "hddraid", version, about = "CLI di debug di HddRaid")]
@@ -60,6 +60,29 @@ enum Command {
         #[arg(long)]
         repair: bool,
     },
+    /// Nome, file system e spazio di un volume.
+    Volume { root: PathBuf },
+    /// Rinomina un volume.
+    RenameVolume { root: PathBuf, name: String },
+    /// Formatta un volume in exFAT e lo rimette nella coppia al posto del
+    /// disco `side`, accanto a `other`. CANCELLA TUTTO il volume.
+    Rejoin {
+        root: PathBuf,
+        other: PathBuf,
+        #[arg(long)]
+        side: CliSide,
+        #[arg(long)]
+        name: String,
+        /// Conferma: senza, non formatta.
+        #[arg(long)]
+        yes: bool,
+    },
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum CliSide {
+    A,
+    B,
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -212,6 +235,51 @@ fn run(command: Command, work: &Path) -> hddraid_core::Result<()> {
                     println!("Non riparato {}: {}", s.path, s.reason);
                 }
             }
+        }
+        Command::Volume { root } => {
+            let info = volumes::info(&root);
+            let (total, free) = volumes::space(&root)?;
+            println!("Nome: {}", info.name);
+            println!("File system: {}", info.filesystem.as_deref().unwrap_or("?"));
+            println!("Spazio: {} liberi su {} byte", free, total);
+            match Disk::detect(&root)? {
+                Some(d) => println!(
+                    "HddRaid: disco {} della coppia {}",
+                    d.side(),
+                    d.identity().archive_id
+                ),
+                None => println!("HddRaid: non preparato"),
+            }
+        }
+        Command::RenameVolume { root, name } => {
+            volumes::rename(&root, &name)?;
+            println!("Rinominato: {name}");
+        }
+        Command::Rejoin {
+            root,
+            other,
+            side,
+            name,
+            yes,
+        } => {
+            if !yes {
+                println!(
+                    "Formattare {} cancella tutto: aggiungi --yes per confermare.",
+                    root.display()
+                );
+                return Ok(());
+            }
+            let side = match side {
+                CliSide::A => Side::A,
+                CliSide::B => Side::B,
+            };
+            let new_root = volumes::format_exfat(&root, &name)?;
+            println!("Formattato: {}", new_root.display());
+            let archive = Archive::rejoin(&new_root, &other, side, &name, work)?;
+            println!(
+                "Rimesso nella coppia come disco {side}: {}",
+                archive.disk(side).label()
+            );
         }
     }
     Ok(())

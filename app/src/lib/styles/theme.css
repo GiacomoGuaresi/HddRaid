@@ -15,6 +15,8 @@
   --surface-3: #ebe4da;
   --border: #e6ded3;
   --border-strong: #d3c8ba;
+  /* Corpo dei dischi nell'illustrazione. */
+  --disk: #4a433d;
 
   --text: #2a2622;
   --text-muted: #6b625a;
@@ -51,6 +53,7 @@
     --surface-3: #45423d;
     --border: #44413c;
     --border-strong: #5a5650;
+    --disk: #8a8279;
 
     --text: #f0ece6;
     --text-muted: #b0a89f;

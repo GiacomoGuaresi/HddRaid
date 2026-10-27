@@ -5,8 +5,8 @@
 -->
 <script lang="ts">
   /** off: scollegato; on: collegato; ok: allineato; warn: c'è un problema;
-   *  gone: appena espulso. */
-  type DiskState = "off" | "on" | "ok" | "warn" | "gone";
+   *  gone: appena espulso; new: un disco non ancora usato con HddRaid. */
+  type DiskState = "off" | "on" | "ok" | "warn" | "gone" | "new";
 
   interface Props {
     a: DiskState;
@@ -17,25 +17,42 @@
     link?: "none" | "compare" | "sync" | "ok" | "question" | "check" | "error";
     /** Più piccola, per le schermate con molto contenuto. */
     compact?: boolean;
+    /** Clic su un disco collegato: apre le sue informazioni. */
+    onselect?: (side: "A" | "B") => void;
   }
 
-  let { a, b, labelA, labelB, link = "none", compact = false }: Props = $props();
+  let { a, b, labelA, labelB, link = "none", compact = false, onselect }: Props = $props();
 
   // Cavi: dal portatile verso ciascun disco.
-  const CABLE_A = "M152 104 C 112 104, 92 120, 92 158";
-  const CABLE_B = "M308 104 C 348 104, 368 120, 368 158";
+  const CABLE_A = "M152 110 C 112 110, 92 124, 92 162";
+  const CABLE_B = "M308 110 C 348 110, 368 124, 368 162";
 </script>
 
 {#snippet disk(state: DiskState, x: number, label: string, side: "a" | "b")}
-  <g class="disk {state} {side}">
+  {@const clickable = onselect !== undefined && state !== "off" && state !== "gone"}
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+  <g
+    class="disk {state} {side}"
+    class:clickable
+    role={clickable ? "button" : undefined}
+    tabindex={clickable ? 0 : undefined}
+    aria-label={clickable ? label : undefined}
+    onclick={() => clickable && onselect?.(side === "a" ? "A" : "B")}
+    onkeydown={(e) => clickable && e.key === "Enter" && onselect?.(side === "a" ? "A" : "B")}
+  >
     <g class="body-group">
-      <ellipse class="shadow" cx={x + 60} cy="226" rx="54" ry="5" />
-      <!-- Spessore della lastra. -->
-      <rect class="edge" x={x} y="164" width="120" height="56" rx="14" />
-      <rect class="body" x={x} y="158" width="120" height="56" rx="14" />
-      <rect class="sheen" x={x + 12} y="164" width="96" height="6" rx="3" />
-      <rect class="port" x={x + 52} y="155" width="16" height="6" rx="2" />
-      <circle class="led" cx={x + 104} cy="200" r="4" />
+      <ellipse class="shadow" cx={x + 60} cy="231" rx="56" ry="5" />
+      <!-- Disegnato su 800×800 e rimpicciolito: faccia superiore in
+           prospettiva, frontale con il pannello e i due LED. -->
+      <g class="art" transform="translate({x} 133) scale(0.15)">
+        <path
+          class="body"
+          d="M45 322 L180 212 Q225 178 280 178 H520 Q575 178 620 212 L755 322 Q800 360 800 420 V510 Q800 620 690 620 H110 Q0 620 0 510 V420 Q0 360 45 322 Z"
+        />
+        <rect class="panel" x="65" y="360" width="670" height="196" rx="45" />
+        <circle class="dot" cx="510" cy="462" r="36" />
+        <circle class="led" cx="632" cy="462" r="36" />
+      </g>
     </g>
     <text class="label" x={x + 60} y="252">{label}</text>
   </g>
@@ -63,12 +80,19 @@
 
   <!-- Portatile -->
   <g class="laptop">
-    <rect class="lid" x="160" y="6" width="140" height="94" rx="10" />
-    <rect class="display" x="168" y="14" width="124" height="78" rx="5" />
-    <path class="base" d="M140 100 H320 L330 110 Q330 114 326 114 H134 Q130 114 130 110 Z" />
-    <rect class="notch" x="214" y="100" width="32" height="4" rx="2" />
+    <!-- Schermo -->
+    <rect class="lid" x="162" y="4" width="136" height="90" rx="10" />
+    <rect class="display" x="170" y="12" width="120" height="74" rx="5" />
+    <!-- Base vista dall'alto: dietro larga come lo schermo, davanti
+         appena più larga, per la prospettiva. -->
+    <path
+      class="base"
+      d="M166 93 H294 Q298 93 300 96 L312 111 Q314 115 309 115 H151 Q146 115 148 111 L160 96 Q162 93 166 93 Z"
+    />
+    <path class="keys" d="M171 97 H289 L296 106 H164 Z" />
+    <rect class="trackpad" x="216" y="108" width="28" height="4" rx="2" />
 
-    <g class="display-content" transform="translate(230 53)">
+    <g class="display-content" transform="translate(230 49)">
       {#if link === "none"}
         <g class="idle">
           <rect x="-26" y="-8" width="20" height="16" rx="4" />
@@ -129,24 +153,23 @@
   .scene * {
     transform-box: fill-box;
   }
+  /* Il disegno del disco si scala rispetto al foglio, non a se stesso. */
+  .scene .art {
+    transform-box: view-box;
+  }
 
   /* --- Portatile ------------------------------------------------------ */
-  .lid {
-    fill: var(--surface);
-    stroke: var(--border-strong);
-    stroke-width: 2;
+  .lid,
+  .base {
+    fill: var(--disk);
   }
   .display {
-    fill: var(--surface-2);
+    fill: var(--surface);
   }
-  .base {
-    fill: var(--surface-3);
-    stroke: var(--border-strong);
-    stroke-width: 2;
-    stroke-linejoin: round;
-  }
-  .notch {
-    fill: var(--border-strong);
+  .keys,
+  .trackpad {
+    fill: var(--surface);
+    opacity: 0.85;
   }
   .laptop {
     animation: rise 0.5s var(--ease) both;
@@ -274,23 +297,17 @@
   }
 
   /* --- Dischi --------------------------------------------------------- */
-  .edge {
-    fill: var(--border-strong);
-  }
   .body {
+    fill: var(--disk);
+  }
+  .panel {
     fill: var(--surface);
-    stroke: var(--border-strong);
-    stroke-width: 2;
   }
-  .sheen {
-    fill: var(--surface-2);
-    opacity: 0.8;
-  }
-  .port {
-    fill: var(--text-faint);
+  .dot {
+    fill: var(--disk);
   }
   .led {
-    fill: var(--text-faint);
+    fill: var(--disk);
   }
   .shadow {
     fill: rgb(60 40 20 / 12%);
@@ -304,6 +321,27 @@
 
   .disk .body-group {
     animation: rise 0.5s var(--ease) both;
+  }
+  .clickable {
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.2s var(--ease);
+  }
+  .clickable:hover,
+  .clickable:focus-visible {
+    transform: translateY(-4px);
+  }
+  .clickable:focus-visible .label {
+    text-decoration: underline;
+  }
+  .new .panel {
+    fill: var(--accent-soft);
+  }
+  .new .led {
+    fill: var(--accent);
+  }
+  .new .label {
+    fill: var(--accent);
   }
   .disk.b .body-group {
     animation-delay: 0.08s;
@@ -322,22 +360,22 @@
     fill: var(--warning);
     animation: blink 0.8s ease-in-out infinite;
   }
-  .warn .body {
-    stroke: var(--warning);
-  }
+
 
   .off .body {
     fill: transparent;
+    stroke: var(--border-strong);
+    stroke-width: 2;
     stroke-dasharray: 6 6;
+    vector-effect: non-scaling-stroke;
   }
-  .off .edge,
-  .off .sheen,
-  .off .port,
+  .off .panel,
+  .off .dot,
   .off .shadow {
     fill: transparent;
   }
   .off .led {
-    fill: var(--border);
+    fill: transparent;
   }
   .off .body-group {
     animation:

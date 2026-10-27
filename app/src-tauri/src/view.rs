@@ -13,10 +13,25 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct DiskView {
     pub side: Side,
+    /// Il nome del volume, come in Esplora file / Finder.
     pub label: String,
     pub root: String,
+    pub filesystem: Option<String>,
     pub total: u64,
     pub free: u64,
+}
+
+/// Un volume collegato che non fa parte della coppia: un disco nuovo, o di
+/// un'altra coppia.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct VolumeView {
+    pub root: String,
+    pub name: String,
+    pub filesystem: Option<String>,
+    pub total: u64,
+    pub free: u64,
+    /// Preparato da HddRaid per un'altra coppia.
+    pub other_pair: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -110,6 +125,7 @@ pub enum Busy {
     Checking { progress: ProgressView },
     Repairing { progress: ProgressView },
     Ejecting,
+    Formatting { label: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -184,9 +200,13 @@ pub struct PairView {
 pub struct State {
     pub pair: Option<PairView>,
     pub disks: BTreeMap<Side, Option<DiskView>>,
-    pub foreign: Vec<String>,
+    /// Volumi collegati che non fanno parte della coppia.
+    pub others: Vec<VolumeView>,
     pub busy: Option<Busy>,
     pub summary: Option<Summary>,
+    /// I dischi sono stati confrontati da quando sono collegati: senza
+    /// riepilogo, vuol dire che sono uguali.
+    pub compared: bool,
     pub outcome: Option<Outcome>,
     pub last_sync: Option<String>,
     pub last_check: Option<String>,
@@ -200,9 +220,10 @@ impl Default for State {
         State {
             pair: None,
             disks: Side::BOTH.map(|s| (s, None)).into_iter().collect(),
-            foreign: Vec::new(),
+            others: Vec::new(),
             busy: None,
             summary: None,
+            compared: false,
             outcome: None,
             last_sync: None,
             last_check: None,

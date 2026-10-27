@@ -125,27 +125,32 @@ impl Texts {
         )
     }
 
-    pub fn ready(&self, files: usize, questions: usize) -> (String, String) {
-        let body = match (files, questions) {
-            (0, q) => self.questions(q),
-            (f, 0) => self.to_align(f),
-            (f, q) => format!("{} · {}", self.to_align(f), self.questions(q)),
-        };
-        (
-            self.pick(
-                "I tuoi dischi sono pronti".into(),
-                "Your drives are ready".into(),
-            ),
-            body,
+    pub fn formatting(&self, label: &str) -> String {
+        self.pick(
+            format!("Sto formattando {label}…"),
+            format!("Formatting {label}…"),
         )
     }
 
-    pub fn already_same(&self) -> (String, String) {
+    pub fn formatted(&self, label: &str) -> (String, String) {
         (
-            self.in_sync(),
+            self.pick(format!("{label} è pronto"), format!("{label} is ready")),
             self.pick(
-                "Non c'è niente da copiare.".into(),
-                "There's nothing to copy.".into(),
+                "Premi Allinea per ricopiarci i tuoi file.".into(),
+                "Press Align to copy your files onto it.".into(),
+            ),
+        )
+    }
+
+    pub fn connected(&self) -> (String, String) {
+        (
+            self.pick(
+                "I tuoi dischi sono collegati".into(),
+                "Your drives are connected".into(),
+            ),
+            self.pick(
+                "Apri HddRaid e premi Allinea quando hai finito di copiare i file.".into(),
+                "Open HddRaid and press Align when you've finished copying files.".into(),
             ),
         )
     }

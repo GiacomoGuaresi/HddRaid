@@ -1,8 +1,8 @@
 <!-- Le domande, una alla volta: file cancellati e file cambiati su entrambi i dischi. -->
 <script lang="ts">
-  import { app, label, other } from "$lib/app.svelte";
+  import { api, app, label, other } from "$lib/app.svelte";
   import Button from "$lib/components/Button.svelte";
-  import { File, FileImage, Folder, Trash, Undo } from "$lib/components/icons";
+  import { File, FileImage, Folder, FolderOpen, Trash, Undo } from "$lib/components/icons";
   import { bytes, date } from "$lib/format";
   import { t } from "$lib/i18n/index.svelte";
   import type { Answer, Question, Side, VersionView } from "$lib/types";
@@ -39,6 +39,10 @@
     }
   }
 
+  function open(side: Side, reveal = false) {
+    api().openFile(side, q.path, reveal);
+  }
+
   function version(question: Question, side: Side): VersionView | null {
     return side === "A" ? question.a : question.b;
   }
@@ -69,7 +73,7 @@
             disk: label(q.deleted_on),
           })}
         </h1>
-        <div class="file card">
+        <button class="file card" onclick={() => open(kept)} title={t(q.is_dir ? "questions.openFolder" : "questions.openFile")}>
           {@render thumb(q.is_dir)}
           <div>
             <strong class="name">{name}</strong>
@@ -81,7 +85,13 @@
             {/if}
             {#if q.is_dir}<span class="muted">{t("questions.folderHint")}</span>{/if}
           </div>
-        </div>
+        </button>
+        {#if !q.is_dir}
+          <button class="reveal" onclick={() => open(kept, true)}>
+            <FolderOpen size={16} />
+            {t("questions.reveal")}
+          </button>
+        {/if}
         <div class="choices">
           <Button variant="secondary" size="large" onclick={() => answer("delete")}>
             <Trash size={20} />
@@ -101,11 +111,17 @@
           {#each ["A", "B"] as const as side (side)}
             {@const v = version(q, side)}
             <div class="version card">
-              {@render thumb(false)}
+              <button class="thumb-button" disabled={!v} onclick={() => open(side)} title={t("questions.openFile")}>
+                {@render thumb(false)}
+              </button>
               <strong>{t("questions.on", { disk: label(side) })}</strong>
               {#if v}
                 <span class="muted">{t("questions.modified", { date: date(v.modified) })}</span>
                 <span class="muted">{bytes(v.size)}</span>
+                <button class="reveal" onclick={() => open(side, true)}>
+                  <FolderOpen size={16} />
+                  {t("questions.reveal")}
+                </button>
               {:else}
                 <span class="muted">{t("questions.missing")}</span>
               {/if}
@@ -183,6 +199,43 @@
     padding: 18px 24px;
     text-align: left;
     max-width: 520px;
+  }
+  button.file {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    transition:
+      transform 0.15s var(--ease),
+      box-shadow 0.15s var(--ease);
+  }
+  button.file:hover,
+  .thumb-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+  .thumb-button {
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease);
+  }
+  .reveal {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: 15px;
+    font-weight: 550;
+    cursor: pointer;
+    margin-top: -8px;
+  }
+  .version .reveal {
+    margin-top: 2px;
+  }
+  .reveal:hover {
+    text-decoration: underline;
   }
   .file > div {
     display: flex;

@@ -34,7 +34,7 @@
 
 <div class="app">
   <header>
-    <span class="brand">HddRaid</span>
+    <span class="spacer"></span>
     {#if !inTauri}
       <select class="demo" onchange={pickDemo} aria-label="Demo">
         {#each SCENARIO_NAMES as name (name)}
@@ -60,7 +60,7 @@
   <main class="stage">
   {#key current}
     <div class="page" in:fade={{ duration: still ? 0 : 250, delay: still ? 0 : 120 }} out:fade={{ duration: still ? 0 : 120 }}>
-    {#if current === "noDisks" || current === "oneDisk" || current === "comparing" || current === "inSync"}
+    {#if current === "noDisks" || current === "oneDisk" || current === "comparing" || current === "connected" || current === "formatting"}
       <Status name={current} />
     {:else if current === "summary"}
       <Summary />
@@ -70,7 +70,7 @@
       <Progress />
     {:else if current === "done" || current === "ejected" || current === "error"}
       <Outcome name={current} />
-    {:else if current === "checkDue" || current === "checkResult"}
+    {:else if current === "checkResult"}
       <Check name={current} />
     {:else if current === "settings"}
       <Settings />
@@ -107,11 +107,8 @@
     gap: 12px;
     padding: 14px 20px 0;
   }
-  .brand {
+  .spacer {
     flex: 1;
-    font-weight: 700;
-    color: var(--text-muted);
-    letter-spacing: 0.01em;
   }
   .demo {
     font: inherit;

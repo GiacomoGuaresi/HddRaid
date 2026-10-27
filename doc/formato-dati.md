@@ -32,7 +32,7 @@ Su Windows la cartella `.hddraid/` viene anche marcata come nascosta.
 | `disk_id` | identificativo unico del disco (UUID) |
 | `archive_id` | identificativo della coppia di dischi, uguale su entrambi |
 | `side` | `A` o `B`: il lato del disco nella coppia, uguale su qualsiasi computer |
-| `label` | nome scelto dall'utente ("Disco A" e "Disco B" di default), usato in tutti i messaggi; modificabile dalle impostazioni |
+| `label` | copia del **nome del volume**, quello che si vede in Esplora file / Finder (massimo 11 caratteri in exFAT). L'app lo usa in tutti i messaggi e lo aggiorna se il volume viene rinominato; rinominare dall'app rinomina il volume vero |
 | `created` | data di preparazione (UTC) |
 | `format` | versione del formato: un'app più vecchia rifiuta un disco più nuovo |
 

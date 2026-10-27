@@ -6,10 +6,24 @@ export type Side = "A" | "B";
 /** Un disco della coppia, collegato. */
 export interface DiskView {
   side: Side;
+  /** Il nome del volume, come in Esplora file / Finder. */
   label: string;
   root: string;
+  /** "exfat", "ntfs", "apfs"…; `null` se non si sa. */
+  filesystem: string | null;
   total: number;
   free: number;
+}
+
+/** Un volume collegato che non fa parte della coppia. */
+export interface VolumeView {
+  root: string;
+  name: string;
+  filesystem: string | null;
+  total: number;
+  free: number;
+  /** Preparato da HddRaid per un'altra coppia. */
+  other_pair: boolean;
 }
 
 /** Una riga del riepilogo: "34 file nuovi sul disco A → li copio sul B". */
@@ -74,7 +88,8 @@ export type Busy =
   | { kind: "syncing"; progress: Progress }
   | { kind: "checking"; progress: Progress }
   | { kind: "repairing"; progress: Progress }
-  | { kind: "ejecting" };
+  | { kind: "ejecting" }
+  | { kind: "formatting"; label: string };
 
 export interface Skipped {
   path: string;
@@ -99,11 +114,14 @@ export interface State {
   /** `null` finché non c'è una coppia di dischi: primo avvio. */
   pair: { labels: Record<Side, string> } | null;
   disks: Record<Side, DiskView | null>;
-  /** Dischi di un'altra coppia collegati: i loro nomi. */
-  foreign: string[];
+  /** Volumi collegati che non fanno parte della coppia. */
+  others: VolumeView[];
   busy: Busy | null;
   /** Cosa c'è da fare, con entrambi i dischi collegati. */
   summary: Summary | null;
+  /** I dischi sono stati confrontati da quando sono collegati: senza
+   *  riepilogo, vuol dire che sono uguali. */
+  compared: boolean;
   /** Esito dell'ultima operazione, finché non si chiude. */
   outcome: Outcome | null;
   last_sync: string | null;

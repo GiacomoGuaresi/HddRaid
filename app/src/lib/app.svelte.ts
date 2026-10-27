@@ -13,13 +13,13 @@ export type ScreenName =
   | "noDisks"
   | "oneDisk"
   | "comparing"
+  | "formatting"
   | "summary"
   | "questions"
   | "syncing"
   | "done"
   | "ejected"
-  | "inSync"
-  | "checkDue"
+  | "connected"
   | "checking"
   | "checkResult"
   | "error"
@@ -60,9 +60,6 @@ export async function start() {
     const view = new URLSearchParams(location.search).get("view");
     if (view) app.view = view as View;
   }
-  // I file possono cambiare mentre la finestra è chiusa: alla riapertura si
-  // confronta di nuovo.
-  window.addEventListener("focus", () => api.refresh());
 }
 
 export function screen(): ScreenName {
@@ -82,6 +79,8 @@ export function screen(): ScreenName {
       return "checking";
     case "ejecting":
       return "done";
+    case "formatting":
+      return "formatting";
   }
 
   switch (s.outcome?.kind) {
@@ -102,8 +101,9 @@ export function screen(): ScreenName {
   if (summary && (summary.lines.length > 0 || summary.questions.length > 0)) {
     return app.view === "questions" ? "questions" : "summary";
   }
-  if (s.check_due) return "checkDue";
-  return "inSync";
+  // Dischi collegati: Allinea, Controlla, Espelli. Dopo un confronto senza
+  // niente da fare, la stessa schermata dice che sono uguali.
+  return "connected";
 }
 
 /** Nome del disco `side`, collegato o no. */

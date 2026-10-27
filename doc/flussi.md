@@ -74,27 +74,34 @@ con le regole di [adozione](sincronizzazione.md#primo-allineamento-adozione)).
 
 ## 3. Uso normale: allineare
 
-1. Collego il **disco A**. Notifica: "Disco A collegato. Collega anche il
-   disco B per renderli uguali."
-2. Copio le foto nuove sul disco A con Esplora file / Finder, come sempre.
-3. Collego il **disco B** (anche giorni dopo, anche su un altro computer).
-   L'app confronta i dischi. Notifica: "I tuoi dischi sono pronti: 34 file
-   nuovi da copiare." Clic → si apre la finestra.
-4. **Riepilogo**, a parole semplici e con numeri grandi:
-   - "34 file nuovi sul disco A → li copio sul disco B (1,2 GB)"
-   - "2 file spostati sul disco B → li sposto anche sul disco A"
-   - "3 file modificati sul disco A → sostituisco quelli del disco B"
-   - "Ci sono 3 domande per te" (cancellazioni e conflitti, flussi 4 e 5)
+1. Collego i due dischi. Notifica: "I tuoi dischi sono collegati". L'app apre
+   la coppia e legge solo le date dell'indice: **non confronta i file da
+   sola**, così resta leggera e non lavora mentre sto ancora copiando.
+2. Copio le foto nuove su uno dei due dischi con Esplora file / Finder, come
+   sempre.
+3. Schermata **Dischi collegati**: i due dischi, la data dell'ultimo
+   allineamento e dell'ultimo controllo, e tre pulsanti: **Allinea**,
+   **Controlla** (il controllo completo, flusso 6) ed **Espelli i dischi**.
+   Se il controllo completo è scaduto, la schermata lo dice e mette in
+   evidenza Controlla.
+4. Premo **Allinea**: l'app confronta i dischi.
+   - Se sono già uguali, la stessa schermata dice "I dischi sono uguali".
+   - Altrimenti mostra il **riepilogo**, a parole semplici e con numeri
+     grandi:
+     - "34 file nuovi sul disco A → li copio sul disco B (1,2 GB)"
+     - "2 file spostati sul disco B → li sposto anche sul disco A"
+     - "3 file modificati sul disco A → sostituisco quelli del disco B"
+     - "Ci sono 3 domande per te" (cancellazioni e conflitti, flussi 4 e 5)
 
-   Pulsante grande **Allinea**. Un link "Mostra i file" apre l'elenco
-   dettagliato.
+     Pulsante grande **Allinea** per eseguire. Un link "Mostra i file" apre
+     l'elenco dettagliato.
 5. **Avanzamento**: barra, file attuale, tempo stimato. Si può chiudere la
    finestra: continua in background.
 6. **Fine**: "I dischi sono uguali." Pulsante **Espelli i dischi**: dopo
    l'espulsione, "Puoi scollegare i dischi."
 
-Se non c'è niente da fare, nessuna finestra: solo l'icona verde e una notifica
-"I dischi sono già uguali".
+Con un solo disco collegato, notifica: "Disco A collegato. Collega anche il
+disco B per renderli uguali."
 
 ## 4. Cancellazioni
 

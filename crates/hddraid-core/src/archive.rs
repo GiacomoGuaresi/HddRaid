@@ -104,6 +104,34 @@ impl Archive {
         Ok(archive)
     }
 
+    /// Rimette nella coppia un disco appena formattato, o un disco nuovo al
+    /// posto di uno rotto: diventa il lato `side`, con il nome `label`.
+    /// La base si svuota, così il prossimo allineamento ci ricopia tutto
+    /// dall'altro disco invece di chiedere dei file "cancellati".
+    pub fn rejoin(
+        new_root: &Path,
+        other_root: &Path,
+        side: Side,
+        label: &str,
+        work_dir: &Path,
+    ) -> Result<Archive> {
+        let other = Disk::open(other_root)?;
+        if other.side() == side {
+            return Err(Error::SameDisk);
+        }
+        if Disk::detect(new_root)?.is_some() {
+            return Err(Error::AlreadyInitialized(new_root.to_path_buf()));
+        }
+        let disk = Disk::init(new_root, &other.identity().archive_id, side, label)?;
+        let mut archive = Archive::open(new_root, other_root, work_dir)?;
+        archive.index_mut().update(|tx| {
+            tx.clear_base()?;
+            tx.log("disk_replaced", None, Some(disk.id()), None)
+        })?;
+        archive.save()?;
+        Ok(archive)
+    }
+
     /// Apre una coppia già preparata, in qualsiasi ordine: il lato di ogni
     /// disco è scritto nel disco. Usa l'indice più recente tra i due e lo
     /// riscrive su entrambi i dischi.

@@ -38,7 +38,22 @@
       "text": "Your files are safe on both drives.",
       "lastSync": "Last aligned: {when}"
     },
-    "foreign": "{name} belongs to another pair of drives: I won't touch it."
+    "foreign": "{name} belongs to another pair of drives: I won't touch it.",
+    "connected": {
+      "title": "Your drives are connected",
+      "text": "Copy your files to either drive, as usual. When you're done, press Align.",
+      "check": "Check",
+      "checkDue": "It's been a while since the last check: I suggest checking that your files are healthy."
+    },
+    "formatting": {
+      "title": "Formatting {disk}…",
+      "text": "This takes a few seconds. Don't unplug the drive."
+    },
+    "fresh": {
+      "title": "{disk} is a new drive",
+      "text": "Click it to see what's on it and, if you want, use it instead of {disk}."
+    },
+    "clickHint": "Click a drive to see its details."
   },
   "summary": {
     "title": "Here's what I'll do",
@@ -132,7 +147,10 @@
       "cancel": "Go back"
     },
     "folderHint": "The whole folder, with everything in it.",
-    "of": "of"
+    "of": "of",
+    "openFile": "Open the file",
+    "openFolder": "Open the folder",
+    "reveal": "Show in folder"
   },
   "syncing": {
     "title": "Copying…",
@@ -258,6 +276,39 @@
     "deletedCount": {
       "one": "1 file deleted",
       "other": "{count} files deleted"
+    }
+  },
+  "disk": {
+    "inPair": "One of your HddRaid drives",
+    "otherPair": "Prepared for another pair of drives",
+    "notUsed": "Not used with HddRaid yet",
+    "used": "{size} used",
+    "free": "{size} free of {total}",
+    "filesystem": "Format",
+    "fs": {
+      "exfat": "exFAT · works on Windows and Mac",
+      "ntfs": "NTFS · a Mac can only read it",
+      "mac": "Mac only",
+      "unknown": "Unknown"
+    },
+    "name": {
+      "label": "Drive name",
+      "hint": "It's the name you also see in File Explorer and Finder. Up to 11 characters.",
+      "empty": "Type a name.",
+      "long": "Up to 11 characters.",
+      "chars": "Without the symbols / \\ : * ? \" < > |"
+    },
+    "format": "Format",
+    "formatAs": "Format and use instead of {disk}",
+    "needOther": "To format it, connect {disk} too: I'll need it to copy your files back.",
+    "twoOnly": "For now HddRaid uses two drives: this one isn't needed.",
+    "needPair": "Connect one of your HddRaid drives too, to use it.",
+    "confirm": {
+      "title": "Everything on {disk} will be erased",
+      "text": "Then I'll put it back with your drives and, when you press Align, copy your files from {other}.",
+      "newName": "Drive name after formatting",
+      "type": "To confirm, type the drive's current name: {disk}",
+      "ok": "Format"
     }
   }
 }

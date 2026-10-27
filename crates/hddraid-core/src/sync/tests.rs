@@ -341,3 +341,27 @@ fn data_dir_is_never_synced() {
     e.sync(never);
     assert!(!e.disks.b.join(DATA_DIR).join("extra").exists());
 }
+
+#[test]
+fn rejoined_disk_is_refilled_without_questions() {
+    let mut e = env();
+    // Il disco B viene formattato: sparisce tutto, anche `.hddraid`.
+    for entry in fs::read_dir(&e.disks.b).unwrap() {
+        let path = entry.unwrap().path();
+        if path.is_dir() {
+            fs::remove_dir_all(&path).unwrap();
+        } else {
+            fs::remove_file(&path).unwrap();
+        }
+    }
+    let work = e._dir.path().join("work-2");
+    let mut archive = Archive::rejoin(&e.disks.b, &e.disks.a, Side::B, "Nuovo", &work).unwrap();
+    assert_eq!(archive.disk(Side::B).label(), "Nuovo");
+    let plan = archive.plan().unwrap();
+    assert!(plan.questions.is_empty());
+    assert!(plan.bytes_to(Side::B) > 0);
+    assert_eq!(plan.bytes_to(Side::A), 0);
+    archive.apply(&plan.actions, &mut |_| {}).unwrap();
+    e.archive = archive;
+    e.assert_aligned();
+}

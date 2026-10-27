@@ -38,7 +38,22 @@
       "text": "I tuoi file sono al sicuro su entrambi i dischi.",
       "lastSync": "Ultimo allineamento: {when}"
     },
-    "foreign": "{name} appartiene a un'altra coppia di dischi: non lo tocco."
+    "foreign": "{name} appartiene a un'altra coppia di dischi: non lo tocco.",
+    "connected": {
+      "title": "I dischi sono collegati",
+      "text": "Copia i tuoi file su uno dei due dischi, come sempre. Quando hai finito, premi Allinea.",
+      "check": "Controlla",
+      "checkDue": "È passato un po' dall'ultimo controllo: ti consiglio di controllare che i file siano in salute."
+    },
+    "formatting": {
+      "title": "Sto formattando {disk}…",
+      "text": "Ci vuole qualche secondo. Non scollegare il disco."
+    },
+    "fresh": {
+      "title": "{disk} è un disco nuovo",
+      "text": "Cliccalo per vedere cosa contiene e, se vuoi, usarlo al posto di {disk}."
+    },
+    "clickHint": "Clicca su un disco per vedere le sue informazioni."
   },
   "summary": {
     "title": "Ecco cosa farò",
@@ -132,7 +147,10 @@
       "cancel": "Torna indietro"
     },
     "folderHint": "La cartella intera, con tutto quello che contiene.",
-    "of": "di"
+    "of": "di",
+    "openFile": "Apri il file",
+    "openFolder": "Apri la cartella",
+    "reveal": "Mostra nella cartella"
   },
   "syncing": {
     "title": "Sto copiando…",
@@ -258,6 +276,39 @@
     "deletedCount": {
       "one": "1 file cancellato",
       "other": "{count} file cancellati"
+    }
+  },
+  "disk": {
+    "inPair": "Fa parte dei tuoi dischi HddRaid",
+    "otherPair": "Preparato per un'altra coppia di dischi",
+    "notUsed": "Non ancora usato con HddRaid",
+    "used": "{size} occupati",
+    "free": "{size} liberi su {total}",
+    "filesystem": "Formato",
+    "fs": {
+      "exfat": "exFAT · va su Windows e Mac",
+      "ntfs": "NTFS · su Mac si può solo leggere",
+      "mac": "Solo per Mac",
+      "unknown": "Sconosciuto"
+    },
+    "name": {
+      "label": "Nome del disco",
+      "hint": "È il nome che vedi anche in Esplora file e Finder. Massimo 11 caratteri.",
+      "empty": "Scrivi un nome.",
+      "long": "Massimo 11 caratteri.",
+      "chars": "Senza i simboli / \\ : * ? \" < > |"
+    },
+    "format": "Formatta",
+    "formatAs": "Formatta e usa al posto di {disk}",
+    "needOther": "Per formattarlo collega anche {disk}: servirà per ricopiarci i tuoi file.",
+    "twoOnly": "Per ora HddRaid usa due dischi: questo disco non serve.",
+    "needPair": "Collega anche uno dei tuoi dischi HddRaid per usarlo.",
+    "confirm": {
+      "title": "Tutto quello che c'è su {disk} verrà cancellato",
+      "text": "Poi lo rimetto tra i tuoi dischi e, quando premi Allinea, ci ricopio i file da {other}.",
+      "newName": "Nome del disco dopo la formattazione",
+      "type": "Per confermare, scrivi il nome attuale del disco: {disk}",
+      "ok": "Formatta"
     }
   }
 }

@@ -67,8 +67,14 @@ fn system_volumes() -> Vec<PathBuf> {
 
 #[cfg(windows)]
 fn system_volumes() -> Vec<PathBuf> {
+    // Il disco di sistema non si propone mai: non va né usato né formattato.
+    let system = std::env::var("SystemDrive").unwrap_or_else(|_| "C:".into());
     (b'A'..=b'Z')
         .map(|letter| PathBuf::from(format!("{}:\\", letter as char)))
+        .filter(|p| {
+            !p.to_string_lossy()
+                .eq_ignore_ascii_case(&format!("{system}\\"))
+        })
         .filter(|p| p.is_dir())
         .collect()
 }
@@ -76,6 +82,284 @@ fn system_volumes() -> Vec<PathBuf> {
 #[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
 fn system_volumes() -> Vec<PathBuf> {
     Vec::new()
+}
+
+/// Nome e file system di un volume.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VolumeInfo {
+    /// Il nome del volume, come lo mostrano Esplora file e Finder.
+    pub name: String,
+    /// "exfat", "ntfs", "apfs"…, in minuscolo; `None` se non si sa.
+    pub filesystem: Option<String>,
+}
+
+/// Lunghezza massima del nome di un volume exFAT.
+pub const MAX_LABEL: usize = 11;
+
+/// Perché un nome non va bene per un volume exFAT.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LabelError {
+    Empty,
+    TooLong,
+    BadChar(char),
+}
+
+/// Controlla che `name` vada bene come nome di un volume exFAT.
+pub fn check_label(name: &str) -> Result<(), LabelError> {
+    if name.trim().is_empty() {
+        return Err(LabelError::Empty);
+    }
+    if name.encode_utf16().count() > MAX_LABEL {
+        return Err(LabelError::TooLong);
+    }
+    match name
+        .chars()
+        .find(|c| c.is_control() || "\"*/:<>?\\|".contains(*c))
+    {
+        Some(c) => Err(LabelError::BadChar(c)),
+        None => Ok(()),
+    }
+}
+
+/// Nome e file system del volume con radice `root`. Per un disco simulato,
+/// il nome è quello della cartella.
+pub fn info(root: &Path) -> VolumeInfo {
+    let folder_name = || {
+        root.file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_else(|| root.to_string_lossy().into_owned())
+    };
+    if is_dev_disk(root) {
+        return VolumeInfo {
+            name: folder_name(),
+            filesystem: None,
+        };
+    }
+    #[cfg(windows)]
+    {
+        windows_info(root).unwrap_or_else(|| VolumeInfo {
+            name: folder_name(),
+            filesystem: None,
+        })
+    }
+    #[cfg(not(windows))]
+    {
+        VolumeInfo {
+            name: folder_name(),
+            filesystem: unix_filesystem(root),
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn unix_filesystem(root: &Path) -> Option<String> {
+    let output = Command::new("mount").output().ok()?;
+    macos_mount_fs(&String::from_utf8_lossy(&output.stdout), root)
+}
+
+#[cfg(target_os = "linux")]
+fn unix_filesystem(root: &Path) -> Option<String> {
+    let text = std::fs::read_to_string("/proc/self/mounts").ok()?;
+    text.lines().find_map(|line| {
+        let mut parts = line.split(' ');
+        let _device = parts.next()?;
+        let point = parts.next()?;
+        let fs = parts.next()?;
+        (linux_mounts(line).first()?.1 == root && !point.is_empty()).then(|| fs.to_lowercase())
+    })
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
+fn unix_filesystem(_root: &Path) -> Option<String> {
+    None
+}
+
+/// File system dall'output di `mount` su macOS:
+/// `/dev/disk4s1 on /Volumes/Disco A (exfat, local, nodev)`.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn macos_mount_fs(text: &str, root: &Path) -> Option<String> {
+    text.lines().find_map(|line| {
+        let (_, rest) = line.split_once(" on ")?;
+        let (point, options) = rest.rsplit_once(" (")?;
+        (Path::new(point) == root).then(|| {
+            options
+                .split([',', ')'])
+                .next()
+                .unwrap_or("")
+                .trim()
+                .to_lowercase()
+        })
+    })
+}
+
+#[cfg(windows)]
+fn windows_info(root: &Path) -> Option<VolumeInfo> {
+    let letter = root.to_string_lossy().chars().next()?;
+    let script = format!(
+        "$v = Get-Volume -DriveLetter {letter}; \"$($v.FileSystemLabel)|$($v.FileSystemType)\""
+    );
+    let output = powershell(&script, false).ok()?;
+    let (name, fs) = output.trim().split_once('|')?;
+    Some(VolumeInfo {
+        name: if name.is_empty() {
+            format!("{letter}:")
+        } else {
+            name.to_string()
+        },
+        filesystem: (!fs.is_empty()).then(|| fs.to_lowercase()),
+    })
+}
+
+/// Rinomina il volume. Su Windows e Linux il sistema chiede la password di
+/// amministratore. Un disco simulato non si rinomina: il nome resta in
+/// `disk.json`.
+pub fn rename(root: &Path, name: &str) -> io::Result<()> {
+    check_label(name).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, format!("{e:?}")))?;
+    if is_dev_disk(root) {
+        return Err(io::Error::from(io::ErrorKind::Unsupported));
+    }
+    rename_system(root, name)
+}
+
+#[cfg(target_os = "macos")]
+fn rename_system(root: &Path, name: &str) -> io::Result<()> {
+    run(Command::new("diskutil").arg("rename").arg(root).arg(name))
+}
+
+#[cfg(target_os = "linux")]
+fn rename_system(root: &Path, name: &str) -> io::Result<()> {
+    let device = linux_device(root)?;
+    run(Command::new("pkexec").args(["exfatlabel", &device, name]))
+}
+
+#[cfg(windows)]
+fn rename_system(root: &Path, name: &str) -> io::Result<()> {
+    let letter = root.to_string_lossy().chars().next().unwrap_or('?');
+    let name = name.replace('\'', "''");
+    powershell(
+        &format!("Set-Volume -DriveLetter {letter} -NewFileSystemLabel '{name}'"),
+        true,
+    )
+    .map(|_| ())
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
+fn rename_system(_root: &Path, _name: &str) -> io::Result<()> {
+    Err(io::Error::from(io::ErrorKind::Unsupported))
+}
+
+/// Formatta il volume in exFAT con il nome `name` e restituisce la sua nuova
+/// radice (su macOS e Linux cambia con il nome). **Cancella tutto.** Un disco
+/// simulato viene svuotato.
+pub fn format_exfat(root: &Path, name: &str) -> io::Result<PathBuf> {
+    check_label(name).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, format!("{e:?}")))?;
+    if is_dev_disk(root) {
+        for entry in std::fs::read_dir(root)? {
+            let path = entry?.path();
+            if path.is_dir() {
+                std::fs::remove_dir_all(&path)?;
+            } else {
+                std::fs::remove_file(&path)?;
+            }
+        }
+        return Ok(root.to_path_buf());
+    }
+    format_system(root, name)
+}
+
+#[cfg(target_os = "macos")]
+fn format_system(root: &Path, name: &str) -> io::Result<PathBuf> {
+    let device = diskutil_field(&root.to_string_lossy(), "Device Identifier")?;
+    run(Command::new("diskutil")
+        .args(["eraseVolume", "ExFAT", name])
+        .arg(root))?;
+    diskutil_field(&device, "Mount Point").map(PathBuf::from)
+}
+
+/// Un campo di `diskutil info`, come "Device Identifier" o "Mount Point".
+#[cfg(target_os = "macos")]
+fn diskutil_field(target: &str, field: &str) -> io::Result<String> {
+    let output = Command::new("diskutil").args(["info", target]).output()?;
+    String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .find_map(|line| {
+            let (key, value) = line.split_once(':')?;
+            (key.trim() == field).then(|| value.trim().to_string())
+        })
+        .filter(|v| !v.is_empty())
+        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, format!("{field}: non trovato")))
+}
+
+#[cfg(target_os = "linux")]
+fn format_system(root: &Path, name: &str) -> io::Result<PathBuf> {
+    let device = linux_device(root)?;
+    run(Command::new("udisksctl").args(["unmount", "-b", &device]))?;
+    run(Command::new("pkexec").args(["mkfs.exfat", "-n", name, &device]))?;
+    let output = Command::new("udisksctl")
+        .args(["mount", "-b", &device])
+        .output()?;
+    // "Mounted /dev/sdb1 at /media/giacomo/Disco B"
+    String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .split_once(" at ")
+        .map(|(_, point)| PathBuf::from(point.trim_end_matches('.')))
+        .ok_or_else(|| io::Error::other("disco formattato ma non montato"))
+}
+
+#[cfg(windows)]
+fn format_system(root: &Path, name: &str) -> io::Result<PathBuf> {
+    let letter = root.to_string_lossy().chars().next().unwrap_or('?');
+    let name = name.replace('\'', "''");
+    powershell(
+        &format!(
+            "Format-Volume -DriveLetter {letter} -FileSystem exFAT -NewFileSystemLabel '{name}' -Confirm:$false -Force"
+        ),
+        true,
+    )?;
+    Ok(root.to_path_buf())
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
+fn format_system(_root: &Path, _name: &str) -> io::Result<PathBuf> {
+    Err(io::Error::from(io::ErrorKind::Unsupported))
+}
+
+#[cfg(target_os = "linux")]
+fn linux_device(root: &Path) -> io::Result<String> {
+    let mounts = std::fs::read_to_string("/proc/self/mounts")?;
+    linux_mounts(&mounts)
+        .into_iter()
+        .find(|(_, point)| point == root)
+        .map(|(device, _)| device)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "volume non montato"))
+}
+
+/// Esegue uno script PowerShell e ne restituisce l'output. Con `elevated`
+/// lo lancia con i permessi di amministratore (Windows chiede conferma).
+#[cfg(windows)]
+fn powershell(script: &str, elevated: bool) -> io::Result<String> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let script = if elevated {
+        let inner = script.replace('\'', "''");
+        format!(
+            "$p = Start-Process powershell -Verb RunAs -Wait -PassThru -WindowStyle Hidden \
+             -ArgumentList '-NoProfile','-Command','{inner}'; exit $p.ExitCode"
+        )
+    } else {
+        script.to_string()
+    };
+    let output = Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()?;
+    if output.status.success() {
+        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    } else {
+        Err(io::Error::other(
+            String::from_utf8_lossy(&output.stderr).trim().to_string(),
+        ))
+    }
 }
 
 /// Righe di `/proc/self/mounts`: dispositivo e punto di montaggio, con gli
@@ -196,6 +480,26 @@ mod tests {
         assert_eq!(mounts.len(), 2);
         assert_eq!(mounts[1].0, "/dev/sdb1");
         assert_eq!(mounts[1].1, Path::new("/media/giacomo/Disco A"));
+    }
+
+    #[test]
+    fn labels() {
+        assert_eq!(check_label("Disco rosso"), Ok(()));
+        assert_eq!(check_label("Perché sì"), Ok(()));
+        assert_eq!(check_label(" "), Err(LabelError::Empty));
+        assert_eq!(check_label("Disco di casa"), Err(LabelError::TooLong));
+        assert_eq!(check_label("Foto/2024"), Err(LabelError::BadChar('/')));
+    }
+
+    #[test]
+    fn parses_macos_mount() {
+        let text = "/dev/disk3s1s1 on / (apfs, sealed, local, read-only)\n\
+                    /dev/disk4s1 on /Volumes/Disco A (exfat, local, nodev, nosuid)\n";
+        assert_eq!(
+            macos_mount_fs(text, Path::new("/Volumes/Disco A")).as_deref(),
+            Some("exfat")
+        );
+        assert_eq!(macos_mount_fs(text, Path::new("/Volumes/Altro")), None);
     }
 
     #[test]
