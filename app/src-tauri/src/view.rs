@@ -98,11 +98,7 @@ impl ProgressView {
         } else {
             (self.done as u64, self.total as u64)
         };
-        if total == 0 {
-            0
-        } else {
-            ((done * 100) / total).min(100) as u32
-        }
+        ((done * 100).checked_div(total).unwrap_or(0)).min(100) as u32
     }
 }
 
