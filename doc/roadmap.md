@@ -30,7 +30,7 @@ Legenda: ⬜ da fare · 🔄 in corso · ✅ fatto
 
 | # | Step | Commit | Stato |
 |---|---|---|---|
-| 1.1 | **Disco**: `.hddraid/disk.json`, scrittura atomica, riconoscimento | `feat(core): disk identity` | ⬜ |
+| 1.1 | **Disco**: `.hddraid/disk.json`, scrittura atomica, riconoscimento | `feat(core): disk identity` | ✅ |
 | 1.2 | **Indice** SQLite versionato, `revision`, copia tra dischi | `feat(core): versioned index` | ⬜ |
 | 1.3 | **Scanner**: esclusioni, NFC, maiuscole, tolleranza sulle date | `feat(core): scanner` | ⬜ |
 | 1.4 | **Hash** SHA-256 in streaming | `feat(core): hashing` | ⬜ |
