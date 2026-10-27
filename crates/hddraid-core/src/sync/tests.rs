@@ -319,7 +319,9 @@ fn interrupted_operation_is_reported_and_healed() {
     let dst = e.disks.b.join("Foto/2026/Natale 2026/IMG_0001.jpg");
     safe_copy(&src, &dst, None, &mut |_| {}).unwrap();
 
-    let work = e._dir.path().join("work");
+    // Riapre la coppia come un altro computer: la copia di lavoro di
+    // `e.archive` è ancora aperta, e Windows non permette di sostituirla.
+    let work = e._dir.path().join("work-2");
     let mut archive = Archive::open(&e.disks.a, &e.disks.b, &work).unwrap();
     assert_eq!(archive.open_info().interrupted.len(), 1);
     let plan = archive.plan().unwrap();
