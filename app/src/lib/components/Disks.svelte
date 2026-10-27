@@ -35,6 +35,10 @@
   // Cavi: dal portatile verso ciascun disco.
   const CABLE_A = "M152 110 C 112 110, 92 124, 92 162";
   const CABLE_B = "M308 110 C 348 110, 368 124, 368 162";
+
+  // Gradiente del corpo di portatile e dischi, con un id unico nella pagina.
+  const uid = $props.id();
+  const shade = `device-${uid}`;
 </script>
 
 {#snippet disk(state: DiskState, x: number, label: string, side: "a" | "b")}
@@ -56,6 +60,7 @@
       <g class="art" transform="translate({x} 133) scale(0.15)">
         <path
           class="body"
+          fill="url(#{shade})"
           d="M45 322 L180 212 Q225 178 280 178 H520 Q575 178 620 212 L755 322 Q800 360 800 420 V510 Q800 620 690 620 H110 Q0 620 0 510 V420 Q0 360 45 322 Z"
         />
         <rect class="panel" x="65" y="360" width="670" height="196" rx="45" />
@@ -86,6 +91,13 @@
   role="img"
   aria-label="{labelA}, {labelB}"
 >
+  <defs>
+    <linearGradient id={shade} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" style="stop-color: var(--device-top)" />
+      <stop offset="1" style="stop-color: var(--device-bottom)" />
+    </linearGradient>
+  </defs>
+
   <!-- Cavi -->
   <g class="cable {a}">
     <path class="wire" d={CABLE_A} pathLength="100" />
@@ -111,12 +123,13 @@
   >
   <g class="laptop">
     <!-- Schermo -->
-    <rect class="lid" x="162" y="4" width="136" height="90" rx="10" />
+    <rect class="lid" fill="url(#{shade})" x="162" y="4" width="136" height="90" rx="10" />
     <rect class="display" x="170" y="12" width="120" height="74" rx="5" />
     <!-- Base vista dall'alto: dietro larga come lo schermo, davanti
          appena più larga, per la prospettiva. -->
     <path
       class="base"
+      fill="url(#{shade})"
       d="M166 93 H294 Q298 93 300 96 L312 111 Q314 115 309 115 H151 Q146 115 148 111 L160 96 Q162 93 166 93 Z"
     />
     <path class="keys" d="M171 97 H289 L296 106 H164 Z" />
@@ -204,15 +217,18 @@
 
   /* --- Portatile ------------------------------------------------------ */
   .lid,
-  .base {
-    fill: var(--disk);
+  .base,
+  .body {
+    stroke: var(--device-edge);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
   }
   .display {
-    fill: var(--surface);
+    fill: var(--device-screen);
   }
   .keys,
   .trackpad {
-    fill: var(--surface);
+    fill: var(--device-keys);
     opacity: 0.85;
   }
   .laptop {
@@ -341,20 +357,15 @@
   }
 
   /* --- Dischi --------------------------------------------------------- */
-  .body {
-    fill: var(--disk);
-  }
   .panel {
-    fill: var(--surface);
+    fill: var(--device-face);
   }
-  .dot {
-    fill: var(--disk);
-  }
+  .dot,
   .led {
-    fill: var(--disk);
+    fill: var(--device-led-off);
   }
   .shadow {
-    fill: rgb(60 40 20 / 12%);
+    fill: var(--device-shadow);
   }
   .label {
     font-size: 16px;

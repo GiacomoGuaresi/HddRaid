@@ -9,14 +9,24 @@
   --font: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* Superfici, dallo sfondo in su: bianchi caldi. */
-  --bg: #fbf8f4;
+  --bg: #f6f1ea;
   --surface: #ffffff;
-  --surface-2: #f4efe8;
-  --surface-3: #ebe4da;
-  --border: #e6ded3;
-  --border-strong: #d3c8ba;
-  /* Corpo dei dischi nell'illustrazione. */
-  --disk: #ab9f92;
+  --surface-2: #efe8de;
+  --surface-3: #e4dbce;
+  --border: #e2d8cb;
+  --border-strong: #cdbfae;
+
+  /* Portatile e dischi nell'illustrazione: alluminio, freddo sul crema,
+   * con un bordo sottile e un alone chiaro dietro. */
+  --device-top: #d3d7dc;
+  --device-bottom: #b3b8bf;
+  --device-edge: #9aa0a8;
+  --device-face: #f3f5f7;
+  --device-screen: #f7f8fa;
+  --device-keys: #e9ecef;
+  --device-led-off: #b8bdc4;
+  --device-shadow: rgb(40 45 55 / 22%);
+  --halo: rgb(255 255 255 / 55%);
 
   --text: #2a2622;
   --text-muted: #6b625a;
@@ -53,7 +63,15 @@
     --surface-3: #45423d;
     --border: #44413c;
     --border-strong: #5a5650;
-    --disk: #8a8279;
+    --device-top: #8a8279;
+    --device-bottom: #8a8279;
+    --device-edge: transparent;
+    --device-face: var(--surface);
+    --device-screen: var(--surface);
+    --device-keys: var(--surface);
+    --device-led-off: #8a8279;
+    --device-shadow: rgb(60 40 20 / 12%);
+    --halo: transparent;
 
     --text: #f0ece6;
     --text-muted: #b0a89f;
@@ -90,7 +108,15 @@
   --surface-3: #45423d;
   --border: #44413c;
   --border-strong: #5a5650;
-  --disk: #8a8279;
+  --device-top: #8a8279;
+  --device-bottom: #8a8279;
+  --device-edge: transparent;
+  --device-face: var(--surface);
+  --device-screen: var(--surface);
+  --device-keys: var(--surface);
+  --device-led-off: #8a8279;
+  --device-shadow: rgb(60 40 20 / 12%);
+  --halo: transparent;
 
   --text: #f0ece6;
   --text-muted: #b0a89f;

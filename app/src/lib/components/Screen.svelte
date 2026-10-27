@@ -84,6 +84,17 @@
   }
   .hero {
     margin: 8px 0 24px;
+    position: relative;
+    isolation: isolate;
+  }
+  /* Alone chiaro dietro l'illustrazione (solo nel tema chiaro). */
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: -30px -90px;
+    z-index: -1;
+    background: radial-gradient(closest-side, var(--halo), transparent);
+    pointer-events: none;
   }
   .text {
     margin-top: 10px;
