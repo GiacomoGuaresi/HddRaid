@@ -41,7 +41,7 @@
       labelB={label("B")}
       a={name === "inSync" ? "ok" : s.disks.A ? "on" : "off"}
       b={name === "inSync" ? "ok" : s.disks.B ? "on" : "off"}
-      link={name === "inSync" ? "ok" : name === "comparing" ? "sync" : "none"}
+      link={name === "inSync" ? "ok" : name === "comparing" ? "compare" : "none"}
     />
   {/snippet}
 

@@ -96,7 +96,11 @@
     "sync": "Allinea",
     "showFiles": "Mostra i file",
     "hideFiles": "Nascondi i file",
-    "noSpace": "Su {disk} mancano {size}. Libera un po' di spazio e ricollega i dischi."
+    "noSpace": "Su {disk} mancano {size}. Libera un po' di spazio e ricollega i dischi.",
+    "total": {
+      "one": "1 file da allineare",
+      "other": "{count} file da allineare"
+    }
   },
   "questions": {
     "counter": "Domanda {n} di {total}",

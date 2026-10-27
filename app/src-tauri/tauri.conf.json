@@ -13,10 +13,10 @@
     "windows": [
       {
         "title": "HddRaid",
-        "width": 900,
-        "height": 640,
-        "minWidth": 720,
-        "minHeight": 520,
+        "width": 960,
+        "height": 720,
+        "minWidth": 760,
+        "minHeight": 580,
         "label": "main",
         "visible": false,
         "center": true

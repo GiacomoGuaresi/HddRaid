@@ -42,7 +42,32 @@
     display: flex;
     flex-direction: column;
     padding: 8px 40px 32px;
-    animation: enter 0.35s var(--ease);
+  }
+
+  /* Entrata a cascata: illustrazione, titolo, testo, contenuto, pulsanti. */
+  .hero,
+  h1,
+  .text,
+  .body,
+  .actions {
+    animation: enter 0.5s var(--ease) both;
+  }
+  h1 {
+    animation-delay: 0.12s;
+  }
+  .text {
+    animation-delay: 0.18s;
+  }
+  .body {
+    animation-delay: 0.24s;
+  }
+  .actions {
+    animation-delay: 0.32s;
+  }
+  .danger .hero {
+    animation:
+      enter 0.5s var(--ease) both,
+      shake 0.5s 0.5s ease-in-out;
   }
   .content {
     flex: 1;
@@ -54,6 +79,8 @@
     justify-content: safe center;
     text-align: center;
     padding: 8px 0 24px;
+    /* Il contenuto lungo sfuma sotto i pulsanti, che restano fermi in fondo. */
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
   }
   .hero {
     margin: 8px 0 24px;
@@ -84,7 +111,17 @@
   @keyframes enter {
     from {
       opacity: 0;
-      transform: translateY(6px);
+      transform: translateY(12px);
+    }
+  }
+  @keyframes shake {
+    20%,
+    60% {
+      transform: translateX(-6px);
+    }
+    40%,
+    80% {
+      transform: translateX(6px);
     }
   }
 </style>

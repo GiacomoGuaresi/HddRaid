@@ -96,7 +96,11 @@
     "sync": "Align",
     "showFiles": "Show files",
     "hideFiles": "Hide files",
-    "noSpace": "{disk} needs {size} more space. Free some up and connect the drives again."
+    "noSpace": "{disk} needs {size} more space. Free some up and connect the drives again.",
+    "total": {
+      "one": "1 file to align",
+      "other": "{count} files to align"
+    }
   },
   "questions": {
     "counter": "Question {n} of {total}",

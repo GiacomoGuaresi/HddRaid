@@ -17,6 +17,7 @@ export { default as HeartPulse } from "@lucide/svelte/icons/heart-pulse";
 export { default as History } from "@lucide/svelte/icons/history";
 export { default as MoveRight } from "@lucide/svelte/icons/arrow-right-left";
 export { default as PencilLine } from "@lucide/svelte/icons/file-pen-line";
+export { default as RefreshCw } from "@lucide/svelte/icons/refresh-cw";
 export { default as Settings } from "@lucide/svelte/icons/settings";
 export { default as ShieldCheck } from "@lucide/svelte/icons/shield-check";
 export { default as Trash } from "@lucide/svelte/icons/trash-2";

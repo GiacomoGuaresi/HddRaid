@@ -5,12 +5,13 @@
   import Disks from "$lib/components/Disks.svelte";
   import Screen from "$lib/components/Screen.svelte";
   import {
-    ArrowRight,
+    Check,
     ChevronDown,
     Copy,
     FolderPlus,
     MoveRight,
     PencilLine,
+    RefreshCw,
     TriangleAlert,
   } from "$lib/components/icons";
   import { bytes } from "$lib/format";
@@ -32,6 +33,15 @@
       if (app.answers[q.key] === "delete" && q.deleted_on) count[other(q.deleted_on)]++;
     }
     return count;
+  });
+
+  /** "37 file da allineare · 1,2 GB" */
+  const total = $derived.by(() => {
+    const count = summary.lines.reduce((n, l) => n + l.count, 0);
+    if (count === 0) return undefined;
+    const size = summary.lines.reduce((n, l) => n + l.bytes, 0);
+    const text = t("summary.total", { count });
+    return size > 0 ? `${text} · ${bytes(size)}` : text;
   });
 
   let showFiles = $state(false);
@@ -56,7 +66,7 @@
   }
 </script>
 
-<Screen title={t("summary.title")}>
+<Screen title={t("summary.title")} text={total}>
   {#snippet hero()}
     <Disks
       labelA={label("A")}
@@ -69,15 +79,18 @@
   {/snippet}
 
   {#if short}
-    <p class="alert danger">
-      <TriangleAlert size={20} />
+    <p class="notice danger">
+      <span class="notice-icon"><TriangleAlert size={20} /></span>
       {t("summary.noSpace", { disk: label(short), size: bytes(summary.missing_space[short]) })}
     </p>
   {/if}
 
   {#if questions.length > 0}
-    <div class="card questions top" class:done={allAnswered}>
-      <div>
+    <div class="notice questions" class:done={allAnswered}>
+      <span class="notice-icon">
+        {#if allAnswered}<Check size={20} strokeWidth={3} />{:else}<span class="mark">?</span>{/if}
+      </span>
+      <div class="notice-text">
         <strong>
           {allAnswered
             ? t("summary.questions.done")
@@ -93,24 +106,21 @@
 
   {#if summary.lines.length === 0}
     <p class="only muted">{t("summary.onlyQuestions")}</p>
+  {:else}
+    <ul class="group">
+      {#each summary.lines as line, i (line.kind + line.from)}
+        {@const Icon = icons[line.kind]}
+        <li style:--i={i}>
+          <span class="icon {line.kind}"><Icon size={20} /></span>
+          <div class="line-text">
+            <strong>{lineTitle(line)}</strong>
+            <span class="muted">{lineAction(line)}</span>
+          </div>
+          {#if line.bytes > 0}<span class="size">{bytes(line.bytes)}</span>{/if}
+        </li>
+      {/each}
+    </ul>
   {/if}
-
-  <ul class="lines">
-    {#each summary.lines as line (line.kind + line.from)}
-      {@const Icon = icons[line.kind]}
-      <li class="card">
-        <span class="icon"><Icon size={22} /></span>
-        <div>
-          <strong>{lineTitle(line)}</strong>
-          <span class="muted">
-            <ArrowRight size={14} />
-            {lineAction(line)}{#if line.bytes > 0}&nbsp;· {bytes(line.bytes)}{/if}
-          </span>
-        </div>
-      </li>
-    {/each}
-  </ul>
-
 
   {#if summary.files.length > 0}
     <button class="toggle" onclick={() => (showFiles = !showFiles)}>
@@ -131,6 +141,7 @@
 
   {#snippet actions()}
     <Button variant="primary" size="large" disabled={short !== null} onclick={align}>
+      <RefreshCw size={20} strokeWidth={2.5} />
       {t("summary.sync")}
     </Button>
   {/snippet}
@@ -162,64 +173,98 @@
 {/if}
 
 <style>
-  .lines {
+  .group {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: grid;
-    gap: 10px;
-  }
-  .card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
-    border-radius: var(--radius);
+    border-radius: var(--radius-large);
     background: var(--surface);
     border: 1px solid var(--border);
     box-shadow: var(--shadow);
+    overflow: hidden;
   }
-  .card > div {
+  .group li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    animation: card-in 0.45s calc(0.3s + var(--i) * 0.07s) var(--ease) both;
+  }
+  .group li + li {
+    border-top: 1px solid var(--border);
+  }
+  .line-text {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
   }
-  .card .muted {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+  .line-text .muted {
+    font-size: 15px;
+  }
+  .size {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    white-space: nowrap;
   }
   .icon {
     display: grid;
     place-items: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     background: var(--accent-soft);
     color: var(--accent);
     flex: none;
   }
+  .notice {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px 14px 14px;
+    margin: 0 0 14px;
+    border-radius: var(--radius-large);
+  }
+  .notice-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex: none;
+    color: #fff;
+  }
+  .notice-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .notice-text .muted {
+    font-size: 15px;
+  }
+  .mark {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+  }
   .questions {
-    margin-bottom: 16px;
     background: var(--warning-soft);
-    border-color: transparent;
-    box-shadow: none;
+  }
+  .questions .notice-icon {
+    background: var(--warning);
   }
   .questions.done {
     background: var(--success-soft);
   }
-  .alert {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    padding: 12px 16px;
-    margin-bottom: 14px;
-    border-radius: var(--radius);
+  .questions.done .notice-icon {
+    background: var(--success);
   }
   .danger {
     background: var(--danger-soft);
-    color: var(--text);
+  }
+  .danger .notice-icon {
+    background: var(--danger);
   }
   .only {
     text-align: center;
@@ -289,6 +334,12 @@
     margin-top: 16px;
     display: flex;
     gap: 12px;
+  }
+  @keyframes card-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
   }
   @keyframes fade {
     from {

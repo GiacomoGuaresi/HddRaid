@@ -59,7 +59,7 @@
 {:else if name === "ejected"}
   <Screen title={t("ejected.title")} text={t("ejected.text")} tone="success">
     {#snippet hero()}
-      <Disks labelA={label("A")} labelB={label("B")} a="off" b="off" link="ok" />
+      <Disks labelA={label("A")} labelB={label("B")} a="gone" b="gone" link="ok" />
     {/snippet}
     {#snippet actions()}
       <Button onclick={() => api().dismiss()}>{t("common.ok")}</Button>
@@ -73,6 +73,7 @@
         labelB={label("B")}
         a={s.disks.A ? "warn" : "off"}
         b={s.disks.B ? "warn" : "off"}
+        link="error"
       />
     {/snippet}
     {#if outcome?.kind === "error"}
