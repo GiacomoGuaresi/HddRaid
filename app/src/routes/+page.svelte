@@ -1,13 +1,22 @@
 <script lang="ts">
   import { app, screen, start } from "$lib/app.svelte";
   import { inTauri } from "$lib/api";
-  import { ArrowLeft, Settings } from "$lib/components/icons";
+  import { ArrowLeft, Settings as Gear } from "$lib/components/icons";
   import { t } from "$lib/i18n/index.svelte";
   import { SCENARIO_NAMES } from "$lib/mock";
+  import Check from "$lib/screens/Check.svelte";
+  import History from "$lib/screens/History.svelte";
+  import Outcome from "$lib/screens/Outcome.svelte";
+  import Progress from "$lib/screens/Progress.svelte";
+  import Questions from "$lib/screens/Questions.svelte";
+  import Settings from "$lib/screens/Settings.svelte";
   import Status from "$lib/screens/Status.svelte";
+  import Summary from "$lib/screens/Summary.svelte";
 
   const current = $derived(screen());
-  const inSettings = $derived(current === "settings" || current === "history");
+  const inSettings = $derived(
+    current === "settings" || current === "history" || current === "questions",
+  );
 
   $effect(() => {
     start();
@@ -25,17 +34,21 @@
     {#if !inTauri}
       <select class="demo" onchange={pickDemo} aria-label="Demo">
         {#each SCENARIO_NAMES as name (name)}
-          <option selected={location.search === `?demo=${name}`}>{name}</option>
+          <option selected={new URLSearchParams(location.search).get("demo") === name}>{name}</option>
         {/each}
       </select>
     {/if}
     {#if inSettings}
-      <button class="icon-button" onclick={() => (app.view = "home")} title={t("common.back")}>
+      <button
+        class="icon-button"
+        onclick={() => (app.view = app.view === "history" ? "settings" : "home")}
+        title={t("common.back")}
+      >
         <ArrowLeft size={22} />
       </button>
     {:else if current !== "loading" && current !== "welcome"}
       <button class="icon-button" onclick={() => (app.view = "settings")} title={t("common.settings")}>
-        <Settings size={22} />
+        <Gear size={22} />
       </button>
     {/if}
   </header>
@@ -43,6 +56,20 @@
   {#key current}
     {#if current === "noDisks" || current === "oneDisk" || current === "comparing" || current === "inSync"}
       <Status name={current} />
+    {:else if current === "summary"}
+      <Summary />
+    {:else if current === "questions"}
+      <Questions />
+    {:else if current === "syncing" || current === "checking"}
+      <Progress />
+    {:else if current === "done" || current === "ejected" || current === "error"}
+      <Outcome name={current} />
+    {:else if current === "checkDue" || current === "checkResult"}
+      <Check name={current} />
+    {:else if current === "settings"}
+      <Settings />
+    {:else if current === "history"}
+      <History />
     {/if}
   {/key}
 </div>

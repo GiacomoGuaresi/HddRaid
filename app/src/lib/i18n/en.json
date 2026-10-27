@@ -2,13 +2,23 @@
   "common": {
     "back": "Back",
     "close": "Close",
-    "settings": "Settings"
+    "settings": "Settings",
+    "ok": "Got it"
   },
   "time": {
     "lessThanMinute": "less than a minute",
-    "minutes": { "one": "{count} minute", "other": "{count} minutes" },
-    "hours": { "one": "{count} hour", "other": "{count} hours" },
-    "days": { "one": "{count} day", "other": "{count} days" }
+    "minutes": {
+      "one": "{count} minute",
+      "other": "{count} minutes"
+    },
+    "hours": {
+      "one": "{count} hour",
+      "other": "{count} hours"
+    },
+    "days": {
+      "one": "{count} day",
+      "other": "{count} days"
+    }
   },
   "status": {
     "noDisks": {
@@ -33,23 +43,50 @@
   "summary": {
     "title": "Here's what I'll do",
     "new": {
-      "title": { "one": "1 new file on {from}", "other": "{count} new files on {from}" },
-      "action": { "one": "I'll copy it to {to}", "other": "I'll copy them to {to}" }
+      "title": {
+        "one": "1 new file on {from}",
+        "other": "{count} new files on {from}"
+      },
+      "action": {
+        "one": "I'll copy it to {to}",
+        "other": "I'll copy them to {to}"
+      }
     },
     "changed": {
-      "title": { "one": "1 file changed on {from}", "other": "{count} files changed on {from}" },
-      "action": { "one": "I'll replace the one on {to}", "other": "I'll replace the ones on {to}" }
+      "title": {
+        "one": "1 file changed on {from}",
+        "other": "{count} files changed on {from}"
+      },
+      "action": {
+        "one": "I'll replace the one on {to}",
+        "other": "I'll replace the ones on {to}"
+      }
     },
     "moved": {
-      "title": { "one": "1 file moved on {from}", "other": "{count} files moved on {from}" },
-      "action": { "one": "I'll move it on {to} too", "other": "I'll move them on {to} too" }
+      "title": {
+        "one": "1 file moved on {from}",
+        "other": "{count} files moved on {from}"
+      },
+      "action": {
+        "one": "I'll move it on {to} too",
+        "other": "I'll move them on {to} too"
+      }
     },
     "folders": {
-      "title": { "one": "1 new folder on {from}", "other": "{count} new folders on {from}" },
-      "action": { "one": "I'll create it on {to} too", "other": "I'll create them on {to} too" }
+      "title": {
+        "one": "1 new folder on {from}",
+        "other": "{count} new folders on {from}"
+      },
+      "action": {
+        "one": "I'll create it on {to} too",
+        "other": "I'll create them on {to} too"
+      }
     },
     "questions": {
-      "title": { "one": "I have a question for you", "other": "I have {count} questions for you" },
+      "title": {
+        "one": "I have a question for you",
+        "other": "I have {count} questions for you"
+      },
       "text": "Deleted files, or files changed on both drives: you decide.",
       "answer": "Answer",
       "done": "You've answered all the questions.",
@@ -82,11 +119,16 @@
     "later": "Decide later",
     "sameForAll": "Do the same for all",
     "confirm": {
-      "title": { "one": "Delete 1 file from {disk}", "other": "Delete {count} files from {disk}" },
+      "title": {
+        "one": "Delete 1 file from {disk}",
+        "other": "Delete {count} files from {disk}"
+      },
       "text": "They can't be recovered.",
       "ok": "Yes, delete",
       "cancel": "Go back"
-    }
+    },
+    "folderHint": "The whole folder, with everything in it.",
+    "of": "of"
   },
   "syncing": {
     "title": "Copying…",
@@ -97,8 +139,14 @@
   },
   "done": {
     "title": "Your drives are the same",
-    "copied": { "one": "I copied 1 file ({size}).", "other": "I copied {count} files ({size})." },
-    "deleted": { "one": "I deleted 1 file.", "other": "I deleted {count} files." },
+    "copied": {
+      "one": "I copied 1 file ({size}).",
+      "other": "I copied {count} files ({size})."
+    },
+    "deleted": {
+      "one": "I deleted 1 file.",
+      "other": "I deleted {count} files."
+    },
     "skipped": {
       "one": "I couldn't copy 1 file: I'll try again next time.",
       "other": "I couldn't copy {count} files: I'll try again next time."
@@ -115,14 +163,18 @@
       "title": "Time to check that your files are healthy",
       "text": "I'll re-read every file on both drives, to find out if any got damaged. It will take about {time}.",
       "start": "Check now",
-      "later": "Later"
+      "later": "Later",
+      "textUnknown": "I'll re-read every file on both drives, to find out if any got damaged."
     },
     "running": {
       "title": "Checking your files…",
       "text": "You can keep using your computer. You can even unplug the drives: I'll pick up from here next time.",
       "stop": "Stop here"
     },
-    "ok": { "one": "Your file is healthy.", "other": "All {count} files are healthy." },
+    "ok": {
+      "one": "Your file is healthy.",
+      "other": "All {count} files are healthy."
+    },
     "healthy": "Your files are healthy",
     "problems": "I found some damaged files",
     "repairs": {
@@ -135,15 +187,30 @@
       "other": "{count} files are damaged on both drives and can't be repaired:"
     },
     "paused": "Check paused: I'll pick up from here next time.",
-    "repaired": { "one": "I repaired 1 file.", "other": "I repaired {count} files." }
+    "repaired": {
+      "one": "I repaired 1 file.",
+      "other": "I repaired {count} files."
+    },
+    "repairing": "Repairing files…",
+    "lastCheck": "Last check: {when}"
   },
   "error": {
-    "title": "Something went wrong"
+    "title": "Something went wrong",
+    "disconnected": "{disk} was unplugged. Plug it back in to continue: I'll pick up where I left off.",
+    "no_space": "There isn't enough space on {disk}. Free some up and connect the drives again.",
+    "read_only": "I can't write to the drive. If it's formatted for Windows (NTFS), a Mac can only read it.",
+    "eject": "I can't eject {disk}: a file may still be open. Close the programs using it and try again.",
+    "other": "Something unexpected happened. Unplug and reconnect the drives, then try again.",
+    "details": "Details",
+    "aDisk": "a drive"
   },
   "settings": {
     "autostart": "Start HddRaid with the computer",
     "checkEvery": "Full check every",
-    "months": { "one": "{count} month", "other": "{count} months" },
+    "months": {
+      "one": "{count} month",
+      "other": "{count} months"
+    },
     "language": "Language",
     "languageAuto": "Automatic",
     "names": "Drive names",
@@ -155,7 +222,11 @@
     "neverChecked": "You haven't checked them yet.",
     "broken": "A drive broke",
     "history": "History",
-    "version": "Version {version}"
+    "version": "Version {version}",
+    "title": "Settings",
+    "general": "General",
+    "disks": "Drives",
+    "brokenSoon": "Coming soon."
   },
   "history": {
     "empty": "Nothing has happened yet.",
@@ -174,6 +245,15 @@
       "full_check_started": "Full check started",
       "full_check_completed": "Full check finished"
     },
-    "synced": { "one": "1 file copied", "other": "{count} files copied" }
+    "synced": {
+      "one": "1 file copied",
+      "other": "{count} files copied"
+    },
+    "title": "History",
+    "on": "on {disk}",
+    "deletedCount": {
+      "one": "1 file deleted",
+      "other": "{count} files deleted"
+    }
   }
 }

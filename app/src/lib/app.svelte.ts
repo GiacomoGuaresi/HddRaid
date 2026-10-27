@@ -1,7 +1,8 @@
 // Stato dell'interfaccia: lo stato del backend più la vista scelta
 // dall'utente. `screen()` decide cosa mostrare.
 
-import { backend, type Backend } from "./api";
+import { backend, inTauri, type Backend } from "./api";
+import { setLanguage } from "./i18n/index.svelte";
 import type { Answer, State } from "./types";
 
 export type View = "home" | "questions" | "settings" | "history";
@@ -43,6 +44,7 @@ export function api(): Backend {
 export async function start() {
   const api = await backend();
   instance = api;
+  setLanguage((await api.settings()).language);
   await api.subscribe((s) => {
     // Le domande cambiano solo con un nuovo confronto: le risposte date a
     // file che non sono più in discussione si dimenticano.
@@ -53,6 +55,11 @@ export async function start() {
     app.state = s;
   });
   app.state = await api.state();
+  if (!inTauri) {
+    // Demo nel browser: `&view=questions` apre direttamente una vista.
+    const view = new URLSearchParams(location.search).get("view");
+    if (view) app.view = view as View;
+  }
   // I file possono cambiare mentre la finestra è chiusa: alla riapertura si
   // confronta di nuovo.
   window.addEventListener("focus", () => api.refresh());
@@ -62,7 +69,8 @@ export function screen(): ScreenName {
   const s = app.state;
   if (!s) return "loading";
   if (app.view === "settings" || app.view === "history") return app.view;
-  if (!s.pair) return "welcome";
+  // Il benvenuto e la preparazione dei dischi arrivano con M5.
+  if (!s.pair) return "noDisks";
 
   switch (s.busy?.kind) {
     case "comparing":

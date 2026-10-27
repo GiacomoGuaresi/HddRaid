@@ -14,9 +14,11 @@
     labelB: string;
     /** Cosa c'è tra i due dischi. */
     link?: "none" | "sync" | "ok" | "question" | "check";
+    /** Più piccola, per le schermate con molto contenuto. */
+    compact?: boolean;
   }
 
-  let { a, b, labelA, labelB, link = "none" }: Props = $props();
+  let { a, b, labelA, labelB, link = "none", compact = false }: Props = $props();
 </script>
 
 {#snippet disk(state: DiskState, label: string)}
@@ -32,7 +34,7 @@
   </figure>
 {/snippet}
 
-<div class="disks">
+<div class="disks" class:compact>
   {@render disk(a, labelA)}
   <div class="link {link}" aria-hidden="true">
     <svg class="line" viewBox="0 0 100 8" preserveAspectRatio="none">
@@ -61,6 +63,9 @@
     gap: 4px;
   }
 
+  .compact {
+    zoom: 0.7;
+  }
   .disk {
     margin: 0;
     width: 150px;

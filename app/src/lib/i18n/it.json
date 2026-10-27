@@ -2,7 +2,8 @@
   "common": {
     "back": "Indietro",
     "close": "Chiudi",
-    "settings": "Impostazioni"
+    "settings": "Impostazioni",
+    "ok": "Ho capito"
   },
   "time": {
     "lessThanMinute": "meno di un minuto",
@@ -125,7 +126,9 @@
       "text": "Non si potranno recuperare.",
       "ok": "Sì, cancella",
       "cancel": "Torna indietro"
-    }
+    },
+    "folderHint": "La cartella intera, con tutto quello che contiene.",
+    "of": "di"
   },
   "syncing": {
     "title": "Sto copiando…",
@@ -160,7 +163,8 @@
       "title": "È ora di controllare che i tuoi file siano in salute",
       "text": "Rileggo ogni file su entrambi i dischi, per scoprire se qualcuno si è rovinato. Ci vorrà circa {time}.",
       "start": "Controlla ora",
-      "later": "Più tardi"
+      "later": "Più tardi",
+      "textUnknown": "Rileggo ogni file su entrambi i dischi, per scoprire se qualcuno si è rovinato."
     },
     "running": {
       "title": "Sto controllando i tuoi file…",
@@ -186,10 +190,19 @@
     "repaired": {
       "one": "Ho riparato 1 file.",
       "other": "Ho riparato {count} file."
-    }
+    },
+    "repairing": "Sto riparando i file…",
+    "lastCheck": "Ultimo controllo: {when}"
   },
   "error": {
-    "title": "Qualcosa non è andato"
+    "title": "Qualcosa non è andato",
+    "disconnected": "{disk} è stato scollegato. Ricollegalo per continuare: riprendo da dove ero rimasto.",
+    "no_space": "Su {disk} non c'è abbastanza spazio. Libera un po' di spazio e ricollega i dischi.",
+    "read_only": "Non riesco a scrivere sul disco. Se è formattato per Windows (NTFS), su Mac si può solo leggere.",
+    "eject": "Non riesco a espellere {disk}: forse un file è ancora aperto. Chiudi i programmi che lo usano e riprova.",
+    "other": "È successo un imprevisto. Scollega e ricollega i dischi, poi riprova.",
+    "details": "Dettagli",
+    "aDisk": "un disco"
   },
   "settings": {
     "autostart": "Avvia HddRaid con il computer",
@@ -209,7 +222,11 @@
     "neverChecked": "Non li hai ancora controllati.",
     "broken": "Un disco si è rotto",
     "history": "Storico",
-    "version": "Versione {version}"
+    "version": "Versione {version}",
+    "title": "Impostazioni",
+    "general": "Generale",
+    "disks": "Dischi",
+    "brokenSoon": "Arriverà presto."
   },
   "history": {
     "empty": "Non è ancora successo niente.",
@@ -231,6 +248,12 @@
     "synced": {
       "one": "1 file copiato",
       "other": "{count} file copiati"
+    },
+    "title": "Storico",
+    "on": "su {disk}",
+    "deletedCount": {
+      "one": "1 file cancellato",
+      "other": "{count} file cancellati"
     }
   }
 }
