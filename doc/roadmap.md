@@ -47,7 +47,7 @@ Legenda: ⬜ da fare · 🔄 in corso · ✅ fatto
 | 2.4 | **Spostamenti e rinomine** tramite hash, cambi di sole maiuscole | `feat(sync): moves` | ✅ |
 | 2.5 | **Journal** e ripresa delle operazioni interrotte | `feat(core): operation journal` | ✅ |
 | 2.6 | **Adozione**: primo allineamento senza base | `feat(sync): adopt existing disks` | ✅ |
-| 2.7 | Test end-to-end degli scenari di guasto, anche su volumi exFAT veri | `test: failure scenarios` | 🔄 |
+| 2.7 | Test end-to-end degli scenari di guasto, anche su volumi exFAT veri | `test: failure scenarios` | ✅ |
 
 ## M3 — Controllo completo (senza UI) → `v0.3.0`
 

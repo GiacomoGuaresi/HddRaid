@@ -25,13 +25,20 @@ impl DevDisks {
         }
     }
 
-    /// Ricrea i due dischi da zero, con lo stesso contenuto.
+    /// Ricrea i due dischi da zero, con lo stesso contenuto. Se una cartella
+    /// esiste già (anche un volume montato) ne svuota il contenuto; le
+    /// cartelle di sistema che non si possono togliere restano.
     pub fn setup(&self) -> io::Result<()> {
         for disk in [&self.a, &self.b] {
-            if disk.exists() {
-                fs::remove_dir_all(disk)?;
-            }
             fs::create_dir_all(disk)?;
+            for entry in fs::read_dir(disk)? {
+                let path = entry?.path();
+                let _ = if path.is_dir() {
+                    fs::remove_dir_all(&path)
+                } else {
+                    fs::remove_file(&path)
+                };
+            }
             populate(disk)?;
         }
         Ok(())

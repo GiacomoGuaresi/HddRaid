@@ -81,3 +81,15 @@ cargo run -p hddraid-cli -- sync dev-disks/disk-a dev-disks/disk-b --yes
 cargo run -p hddraid-devtools --bin dev-disks -- break all
 cargo run -p hddraid-cli -- sync dev-disks/disk-a dev-disks/disk-b
 ```
+
+## Prova su volumi exFAT veri
+
+Su macOS, `scripts/exfat-e2e.sh` crea due immagini disco exFAT in
+`dev-disks/exfat/`, le monta (senza permessi di amministratore), ci fa un
+giro completo (preparazione, allineamento, tutti gli scenari, controllo
+completo con riparazione) e verifica che alla fine i dischi siano uguali.
+Gira anche in CI sul runner macOS.
+
+```sh
+scripts/exfat-e2e.sh
+```

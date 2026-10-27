@@ -42,6 +42,10 @@ jobs:
       - name: Test
         run: cargo test --workspace
 
+      - name: Prova su volumi exFAT veri (macOS)
+        if: runner.os == 'macOS'
+        run: scripts/exfat-e2e.sh
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
