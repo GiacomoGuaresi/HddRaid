@@ -5,6 +5,7 @@
 pub mod disk;
 pub mod error;
 pub mod fsutil;
+pub mod hash;
 pub mod index;
 pub mod paths;
 pub mod scan;
