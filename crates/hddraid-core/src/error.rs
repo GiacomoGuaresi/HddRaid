@@ -27,6 +27,12 @@ pub enum Error {
 
     #[error("{} non è un indice HddRaid valido", .0.display())]
     IndexInvalid(PathBuf),
+
+    #[error("{} è cambiato durante l'operazione", .0.display())]
+    SourceChanged(PathBuf),
+
+    #[error("la copia {} non corrisponde all'originale", .0.display())]
+    VerifyFailed(PathBuf),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

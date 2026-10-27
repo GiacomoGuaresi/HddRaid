@@ -2,6 +2,7 @@
 //!
 //! Non dipende dall'interfaccia: l'app Tauri si limita a chiamarlo.
 
+pub mod copy;
 pub mod disk;
 pub mod error;
 pub mod fsutil;
