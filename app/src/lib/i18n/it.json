@@ -1,0 +1,236 @@
+{
+  "common": {
+    "back": "Indietro",
+    "close": "Chiudi",
+    "settings": "Impostazioni"
+  },
+  "time": {
+    "lessThanMinute": "meno di un minuto",
+    "minutes": {
+      "one": "{count} minuto",
+      "other": "{count} minuti"
+    },
+    "hours": {
+      "one": "{count} ora",
+      "other": "{count} ore"
+    },
+    "days": {
+      "one": "{count} giorno",
+      "other": "{count} giorni"
+    }
+  },
+  "status": {
+    "noDisks": {
+      "title": "Collega i tuoi dischi",
+      "text": "Quando li colleghi, li confronto e ti dico cosa c'è da fare."
+    },
+    "oneDisk": {
+      "title": "{present} è collegato",
+      "text": "Collega anche {missing} per renderli uguali. Intanto puoi copiare i tuoi file su {present}, come sempre."
+    },
+    "comparing": {
+      "title": "Sto confrontando i dischi…",
+      "text": "Ci vuole solo un momento."
+    },
+    "inSync": {
+      "title": "I dischi sono uguali",
+      "text": "I tuoi file sono al sicuro su entrambi i dischi.",
+      "lastSync": "Ultimo allineamento: {when}"
+    },
+    "foreign": "{name} appartiene a un'altra coppia di dischi: non lo tocco."
+  },
+  "summary": {
+    "title": "Ecco cosa farò",
+    "new": {
+      "title": {
+        "one": "1 file nuovo su {from}",
+        "other": "{count} file nuovi su {from}"
+      },
+      "action": {
+        "one": "lo copio su {to}",
+        "other": "li copio su {to}"
+      }
+    },
+    "changed": {
+      "title": {
+        "one": "1 file modificato su {from}",
+        "other": "{count} file modificati su {from}"
+      },
+      "action": {
+        "one": "sostituisco quello su {to}",
+        "other": "sostituisco quelli su {to}"
+      }
+    },
+    "moved": {
+      "title": {
+        "one": "1 file spostato su {from}",
+        "other": "{count} file spostati su {from}"
+      },
+      "action": {
+        "one": "lo sposto anche su {to}",
+        "other": "li sposto anche su {to}"
+      }
+    },
+    "folders": {
+      "title": {
+        "one": "1 cartella nuova su {from}",
+        "other": "{count} cartelle nuove su {from}"
+      },
+      "action": {
+        "one": "la creo anche su {to}",
+        "other": "le creo anche su {to}"
+      }
+    },
+    "questions": {
+      "title": {
+        "one": "C'è una domanda per te",
+        "other": "Ci sono {count} domande per te"
+      },
+      "text": "File cancellati o cambiati su entrambi i dischi: decidi tu.",
+      "answer": "Rispondi",
+      "done": "Hai risposto a tutte le domande.",
+      "edit": "Cambia le risposte"
+    },
+    "onlyQuestions": "Il resto è già uguale.",
+    "sync": "Allinea",
+    "showFiles": "Mostra i file",
+    "hideFiles": "Nascondi i file",
+    "noSpace": "Su {disk} mancano {size}. Libera un po' di spazio e ricollega i dischi."
+  },
+  "questions": {
+    "counter": "Domanda {n} di {total}",
+    "deletion": {
+      "file": "Questo file è stato cancellato da {disk}.",
+      "folder": "Questa cartella è stata cancellata da {disk}.",
+      "delete": "Cancella anche da {disk}",
+      "restoreFile": "Rimettilo su {disk}",
+      "restoreFolder": "Rimettila su {disk}"
+    },
+    "conflict": {
+      "text": "Questo file è stato cambiato su entrambi i dischi, in modo diverso.",
+      "keep": "Tieni questa",
+      "both": "Tienile entrambe",
+      "bothHint": "La versione di {disk} si chiamerà «{name}»."
+    },
+    "on": "Su {disk}",
+    "missing": "Non c'è più",
+    "modified": "Modificato il {date}",
+    "later": "Decido dopo",
+    "sameForAll": "Fai lo stesso per tutti",
+    "confirm": {
+      "title": {
+        "one": "Cancello 1 file da {disk}",
+        "other": "Cancello {count} file da {disk}"
+      },
+      "text": "Non si potranno recuperare.",
+      "ok": "Sì, cancella",
+      "cancel": "Torna indietro"
+    }
+  },
+  "syncing": {
+    "title": "Sto copiando…",
+    "text": "Puoi chiudere questa finestra: continuo da solo.",
+    "count": "{done} di {total} file",
+    "eta": "Manca circa {time}",
+    "etaUnknown": "Sto calcolando quanto manca…"
+  },
+  "done": {
+    "title": "I dischi sono uguali",
+    "copied": {
+      "one": "Ho copiato 1 file ({size}).",
+      "other": "Ho copiato {count} file ({size})."
+    },
+    "deleted": {
+      "one": "Ho cancellato 1 file.",
+      "other": "Ho cancellato {count} file."
+    },
+    "skipped": {
+      "one": "Non sono riuscito a copiare 1 file: ci riprovo la prossima volta.",
+      "other": "Non sono riuscito a copiare {count} file: ci riprovo la prossima volta."
+    },
+    "eject": "Espelli i dischi",
+    "ejecting": "Sto espellendo i dischi…"
+  },
+  "ejected": {
+    "title": "Puoi scollegare i dischi",
+    "text": "Alla prossima!"
+  },
+  "check": {
+    "due": {
+      "title": "È ora di controllare che i tuoi file siano in salute",
+      "text": "Rileggo ogni file su entrambi i dischi, per scoprire se qualcuno si è rovinato. Ci vorrà circa {time}.",
+      "start": "Controlla ora",
+      "later": "Più tardi"
+    },
+    "running": {
+      "title": "Sto controllando i tuoi file…",
+      "text": "Puoi usare il computer normalmente. Puoi anche scollegare i dischi: riprenderò da qui la prossima volta.",
+      "stop": "Fermati qui"
+    },
+    "ok": {
+      "one": "Il tuo file è in salute.",
+      "other": "Tutti i {count} file sono in salute."
+    },
+    "healthy": "I tuoi file sono in salute",
+    "problems": "Ho trovato dei file rovinati",
+    "repairs": {
+      "one": "1 file si era rovinato su {disk}. Lo riparo usando {other}?",
+      "other": "{count} file si erano rovinati su {disk}. Li riparo usando {other}?"
+    },
+    "repair": "Ripara",
+    "lost": {
+      "one": "1 file è rovinato su entrambi i dischi e non si può riparare:",
+      "other": "{count} file sono rovinati su entrambi i dischi e non si possono riparare:"
+    },
+    "paused": "Controllo interrotto: riprenderò da qui la prossima volta.",
+    "repaired": {
+      "one": "Ho riparato 1 file.",
+      "other": "Ho riparato {count} file."
+    }
+  },
+  "error": {
+    "title": "Qualcosa non è andato"
+  },
+  "settings": {
+    "autostart": "Avvia HddRaid con il computer",
+    "checkEvery": "Controllo completo ogni",
+    "months": {
+      "one": "{count} mese",
+      "other": "{count} mesi"
+    },
+    "language": "Lingua",
+    "languageAuto": "Automatica",
+    "names": "Nomi dei dischi",
+    "namesHint": "Un nome che ti aiuti a riconoscerli, come «Disco rosso».",
+    "rename": "Rinomina",
+    "checkNow": "Controlla i dischi adesso",
+    "checkNowHint": "Collega entrambi i dischi per controllarli.",
+    "lastCheck": "Ultimo controllo: {when}",
+    "neverChecked": "Non li hai ancora controllati.",
+    "broken": "Un disco si è rotto",
+    "history": "Storico",
+    "version": "Versione {version}"
+  },
+  "history": {
+    "empty": "Non è ancora successo niente.",
+    "kinds": {
+      "synced": "Dischi allineati",
+      "copied": "Copiato",
+      "moved": "Spostato",
+      "deleted": "Cancellato",
+      "renamed": "Rinominato",
+      "folder_created": "Cartella creata",
+      "folder_deleted": "Cartella cancellata",
+      "skipped": "Non copiato",
+      "repaired": "Riparato",
+      "created": "Dischi preparati",
+      "index_rebuilt": "Indice ricostruito",
+      "full_check_started": "Controllo completo iniziato",
+      "full_check_completed": "Controllo completo finito"
+    },
+    "synced": {
+      "one": "1 file copiato",
+      "other": "{count} file copiati"
+    }
+  }
+}

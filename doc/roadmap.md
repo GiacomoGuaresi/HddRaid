@@ -63,7 +63,7 @@ Vedi [flussi](flussi.md).
 
 | # | Step | Commit | Stato |
 |---|---|---|---|
-| 4.1 | Design: tono caldo, Inter + Lucide come PrintPicker, tema chiaro/scuro, componenti, italiano e inglese | `feat(ui): design system` | ⬜ |
+| 4.1 | Design: tono caldo, Inter + Lucide come PrintPicker, tema chiaro/scuro, componenti, italiano e inglese | `feat(ui): design system` | ✅ |
 | 4.2 | Icona nella barra con gli stati, avvio con il computer | `feat(app): tray and autostart` | ⬜ |
 | 4.3 | **Rilevamento dei dischi** e notifiche | `feat(app): disk detection` | ⬜ |
 | 4.4 | **Allinea**: riepilogo, avanzamento, fine, espulsione | `feat(ui): sync flow` | ⬜ |

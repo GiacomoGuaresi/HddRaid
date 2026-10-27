@@ -1,0 +1,179 @@
+{
+  "common": {
+    "back": "Back",
+    "close": "Close",
+    "settings": "Settings"
+  },
+  "time": {
+    "lessThanMinute": "less than a minute",
+    "minutes": { "one": "{count} minute", "other": "{count} minutes" },
+    "hours": { "one": "{count} hour", "other": "{count} hours" },
+    "days": { "one": "{count} day", "other": "{count} days" }
+  },
+  "status": {
+    "noDisks": {
+      "title": "Connect your drives",
+      "text": "When you connect them, I'll compare them and tell you what needs doing."
+    },
+    "oneDisk": {
+      "title": "{present} is connected",
+      "text": "Connect {missing} too, so I can make them the same. Meanwhile you can copy your files to {present}, as usual."
+    },
+    "comparing": {
+      "title": "Comparing your drives…",
+      "text": "This only takes a moment."
+    },
+    "inSync": {
+      "title": "Your drives are the same",
+      "text": "Your files are safe on both drives.",
+      "lastSync": "Last aligned: {when}"
+    },
+    "foreign": "{name} belongs to another pair of drives: I won't touch it."
+  },
+  "summary": {
+    "title": "Here's what I'll do",
+    "new": {
+      "title": { "one": "1 new file on {from}", "other": "{count} new files on {from}" },
+      "action": { "one": "I'll copy it to {to}", "other": "I'll copy them to {to}" }
+    },
+    "changed": {
+      "title": { "one": "1 file changed on {from}", "other": "{count} files changed on {from}" },
+      "action": { "one": "I'll replace the one on {to}", "other": "I'll replace the ones on {to}" }
+    },
+    "moved": {
+      "title": { "one": "1 file moved on {from}", "other": "{count} files moved on {from}" },
+      "action": { "one": "I'll move it on {to} too", "other": "I'll move them on {to} too" }
+    },
+    "folders": {
+      "title": { "one": "1 new folder on {from}", "other": "{count} new folders on {from}" },
+      "action": { "one": "I'll create it on {to} too", "other": "I'll create them on {to} too" }
+    },
+    "questions": {
+      "title": { "one": "I have a question for you", "other": "I have {count} questions for you" },
+      "text": "Deleted files, or files changed on both drives: you decide.",
+      "answer": "Answer",
+      "done": "You've answered all the questions.",
+      "edit": "Change answers"
+    },
+    "onlyQuestions": "Everything else is already the same.",
+    "sync": "Align",
+    "showFiles": "Show files",
+    "hideFiles": "Hide files",
+    "noSpace": "{disk} needs {size} more space. Free some up and connect the drives again."
+  },
+  "questions": {
+    "counter": "Question {n} of {total}",
+    "deletion": {
+      "file": "This file was deleted from {disk}.",
+      "folder": "This folder was deleted from {disk}.",
+      "delete": "Delete from {disk} too",
+      "restoreFile": "Put it back on {disk}",
+      "restoreFolder": "Put it back on {disk}"
+    },
+    "conflict": {
+      "text": "This file was changed on both drives, in different ways.",
+      "keep": "Keep this one",
+      "both": "Keep both",
+      "bothHint": "The version on {disk} will be called “{name}”."
+    },
+    "on": "On {disk}",
+    "missing": "No longer there",
+    "modified": "Changed on {date}",
+    "later": "Decide later",
+    "sameForAll": "Do the same for all",
+    "confirm": {
+      "title": { "one": "Delete 1 file from {disk}", "other": "Delete {count} files from {disk}" },
+      "text": "They can't be recovered.",
+      "ok": "Yes, delete",
+      "cancel": "Go back"
+    }
+  },
+  "syncing": {
+    "title": "Copying…",
+    "text": "You can close this window: I'll carry on by myself.",
+    "count": "{done} of {total} files",
+    "eta": "About {time} left",
+    "etaUnknown": "Working out how long it will take…"
+  },
+  "done": {
+    "title": "Your drives are the same",
+    "copied": { "one": "I copied 1 file ({size}).", "other": "I copied {count} files ({size})." },
+    "deleted": { "one": "I deleted 1 file.", "other": "I deleted {count} files." },
+    "skipped": {
+      "one": "I couldn't copy 1 file: I'll try again next time.",
+      "other": "I couldn't copy {count} files: I'll try again next time."
+    },
+    "eject": "Eject the drives",
+    "ejecting": "Ejecting the drives…"
+  },
+  "ejected": {
+    "title": "You can unplug the drives",
+    "text": "See you next time!"
+  },
+  "check": {
+    "due": {
+      "title": "Time to check that your files are healthy",
+      "text": "I'll re-read every file on both drives, to find out if any got damaged. It will take about {time}.",
+      "start": "Check now",
+      "later": "Later"
+    },
+    "running": {
+      "title": "Checking your files…",
+      "text": "You can keep using your computer. You can even unplug the drives: I'll pick up from here next time.",
+      "stop": "Stop here"
+    },
+    "ok": { "one": "Your file is healthy.", "other": "All {count} files are healthy." },
+    "healthy": "Your files are healthy",
+    "problems": "I found some damaged files",
+    "repairs": {
+      "one": "1 file got damaged on {disk}. Shall I repair it using {other}?",
+      "other": "{count} files got damaged on {disk}. Shall I repair them using {other}?"
+    },
+    "repair": "Repair",
+    "lost": {
+      "one": "1 file is damaged on both drives and can't be repaired:",
+      "other": "{count} files are damaged on both drives and can't be repaired:"
+    },
+    "paused": "Check paused: I'll pick up from here next time.",
+    "repaired": { "one": "I repaired 1 file.", "other": "I repaired {count} files." }
+  },
+  "error": {
+    "title": "Something went wrong"
+  },
+  "settings": {
+    "autostart": "Start HddRaid with the computer",
+    "checkEvery": "Full check every",
+    "months": { "one": "{count} month", "other": "{count} months" },
+    "language": "Language",
+    "languageAuto": "Automatic",
+    "names": "Drive names",
+    "namesHint": "A name that helps you tell them apart, like “Red drive”.",
+    "rename": "Rename",
+    "checkNow": "Check the drives now",
+    "checkNowHint": "Connect both drives to check them.",
+    "lastCheck": "Last check: {when}",
+    "neverChecked": "You haven't checked them yet.",
+    "broken": "A drive broke",
+    "history": "History",
+    "version": "Version {version}"
+  },
+  "history": {
+    "empty": "Nothing has happened yet.",
+    "kinds": {
+      "synced": "Drives aligned",
+      "copied": "Copied",
+      "moved": "Moved",
+      "deleted": "Deleted",
+      "renamed": "Renamed",
+      "folder_created": "Folder created",
+      "folder_deleted": "Folder deleted",
+      "skipped": "Not copied",
+      "repaired": "Repaired",
+      "created": "Drives prepared",
+      "index_rebuilt": "Index rebuilt",
+      "full_check_started": "Full check started",
+      "full_check_completed": "Full check finished"
+    },
+    "synced": { "one": "1 file copied", "other": "{count} files copied" }
+  }
+}

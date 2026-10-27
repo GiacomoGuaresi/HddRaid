@@ -26,6 +26,17 @@ cargo fmt --all                              # formattazione
 cd app && pnpm install && pnpm tauri dev     # app in sviluppo
 ```
 
+## Interfaccia nel browser
+
+`pnpm dev` (in `app/`) apre l'interfaccia in un browser normale, con un
+backend simulato al posto di Rust (`app/src/lib/mock.ts`). Lo scenario si
+sceglie con `?demo=<nome>` o dal menu in alto a destra: `none`, `one`,
+`summary`, `questions`, `syncing`, `done`, `check-due`, `check-repairs`… Le
+azioni (Allinea, Controlla, Espelli) simulano anche l'avanzamento.
+
+Serve per lavorare sulla grafica senza dischi e senza ricompilare Rust.
+`pnpm check` controlla anche che italiano e inglese abbiano gli stessi testi.
+
 ## Dischi simulati
 
 Due cartelle in `dev-disks/` (ignorata da git) fanno da disco A e disco B, con
