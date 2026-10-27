@@ -17,6 +17,9 @@ pub const DOWNLOAD_PAGE: &str = "Scarica HddRaid.html";
 /// Suffisso delle copie in corso (vedi `copy`).
 pub const PARTIAL_SUFFIX: &str = ".hddraid-partial";
 
+/// Suffisso del nome temporaneo usato per cambiare solo le maiuscole.
+pub const RENAME_SUFFIX: &str = ".hddraid-rename";
+
 /// Nomi di sistema ignorati a qualsiasi livello (confronto senza maiuscole).
 const IGNORED_NAMES: &[&str] = &[
     // Windows
@@ -55,6 +58,7 @@ pub fn is_ignored(name: &str, at_root: bool) -> bool {
     IGNORED_NAMES.iter().any(|n| n.eq_ignore_ascii_case(name))
         || IGNORED_PREFIXES.iter().any(|p| name.starts_with(p))
         || name.ends_with(PARTIAL_SUFFIX)
+        || name.ends_with(RENAME_SUFFIX)
 }
 
 /// Percorso sul disco a partire da quello relativo.
@@ -104,6 +108,7 @@ mod tests {
             "._IMG_0001.jpg",
             ".Trash-1000",
             ".a.jpg.hddraid-partial",
+            ".a.jpg.hddraid-rename",
         ] {
             assert!(is_ignored(name, false), "{name}");
         }

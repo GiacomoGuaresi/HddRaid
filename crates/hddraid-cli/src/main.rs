@@ -52,6 +52,14 @@ enum Command {
         #[arg(long)]
         yes: bool,
     },
+    /// Controllo completo: rilegge tutti i file e cerca quelli rovinati.
+    Check {
+        a: PathBuf,
+        b: PathBuf,
+        /// Ripara subito i file rovinati dalla copia buona.
+        #[arg(long)]
+        repair: bool,
+    },
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -177,6 +185,32 @@ fn run(command: Command, work: &Path) -> hddraid_core::Result<()> {
             );
             for s in &report.skipped {
                 println!("Saltato {}: {}", s.path, s.reason);
+            }
+        }
+        Command::Check { a, b, repair } => {
+            let mut archive = Archive::open(&a, &b, work)?;
+            let cancel = std::sync::atomic::AtomicBool::new(false);
+            let report = archive.full_check(
+                &mut |p| eprint!("\r{}/{} file controllati", p.checked, p.total),
+                &cancel,
+            )?;
+            eprintln!();
+            println!("File in salute: {}", report.ok);
+            for r in &report.repairs {
+                println!("Rovinato sul disco {}: {}", r.bad, r.path);
+            }
+            for path in &report.lost {
+                println!("Rovinato su entrambi i dischi: {path}");
+            }
+            for path in &report.changed {
+                println!("Cambiato (lo sistema l'allineamento): {path}");
+            }
+            if repair && !report.repairs.is_empty() {
+                let done = archive.repair(&report.repairs, &mut |_| {})?;
+                println!("Riparati: {}", done.done);
+                for s in &done.skipped {
+                    println!("Non riparato {}: {}", s.path, s.reason);
+                }
             }
         }
     }

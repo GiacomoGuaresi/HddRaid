@@ -264,8 +264,11 @@ impl Archive {
                 if key(from) == key(to) {
                     // Solo maiuscole: in due passi, così cambia davvero
                     // anche su exFAT.
-                    let tmp =
-                        to_path.with_file_name(format!(".{}.hddraid-rename", paths::file_name(to)));
+                    let tmp = to_path.with_file_name(format!(
+                        ".{}{}",
+                        paths::file_name(to),
+                        paths::RENAME_SUFFIX
+                    ));
                     fs::rename(&from_path, &tmp)?;
                     fs::rename(&tmp, &to_path)?;
                 } else {

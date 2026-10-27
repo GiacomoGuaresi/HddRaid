@@ -212,5 +212,5 @@ Non vengono allineati, né contano come differenze:
 | `.Trashes/`, `.Spotlight-V100/`, `.fseventsd/`, `.TemporaryItems/`, `.DocumentRevisions-V100/` | macOS |
 | `.DS_Store`, `._*` (file AppleDouble), `Thumbs.db`, `desktop.ini` | file di servizio di Finder ed Esplora file |
 | `.Trash-*/` | cestino di Linux |
-| `*.hddraid-partial` | copie interrotte dell'app |
+| `*.hddraid-partial`, `*.hddraid-rename` | copie e rinomine interrotte dell'app |
 | link simbolici | non supportati da exFAT |

@@ -51,11 +51,10 @@ Database SQLite, **uguale su entrambi i dischi** dopo ogni allineamento.
 
 | Tabella | Contenuto |
 |---|---|
-| `meta` | `archive_id`, `hash_algorithm` (`sha256`), `revision`, `last_sync`, `last_full_check`, impostazioni condivise (frequenza del controllo completo) |
+| `meta` | `archive_id`, `hash_algorithm` (`sha256`), `revision`, `created`, `last_sync`, `last_full_check`, `full_check_started` (controllo completo in corso, da riprendere) |
 | `disks` | un record per disco: id, nome, data di aggiunta, data di rimozione (dischi sostituiti) |
 | `files` | la base: percorso (relativo alla radice, con `/`, in NFC), tipo (`file` o `cartella vuota`), dimensione, data di modifica (ns, UTC), hash, data di aggiunta |
 | `verified` | per ogni file e disco: data dell'ultima verifica del contenuto (controllo completo) |
-| `pending` | conflitti e cancellazioni non ancora decisi: percorso, tipo, stato visto su ogni disco |
 | `events` | storico: data, tipo (copiato, spostato, cancellato, riparato, conflitto…), percorso, disco, dettagli JSON |
 | `journal` | operazioni in corso: tipo e parametri JSON; una riga rimasta indica un'operazione interrotta |
 
@@ -94,14 +93,18 @@ Se il computer si spegne o un disco si stacca a metà:
 - **Indice**: vince quello con la `revision` più alta; l'altro viene
   riallineato all'apertura.
 - **Azioni** (copia, sposta, cancella, ripara): prima di toccare i file,
-  l'azione viene scritta nella tabella `journal`. Se resta una riga, al
-  collegamento successivo l'app la completa. Ogni azione si può rieseguire
-  senza danni, perché riconosce quello che era già stato fatto (file già
-  copiato, già spostato, già cancellato).
-- **Copie a metà**: restano come `.hddraid-partial`, ignorati e sostituiti.
-- **Allineamento**: la nuova base si scrive solo alla fine. Se l'allineamento
-  si interrompe, al giro successivo l'app ritrova le stesse differenze, meno
-  quelle già sistemate.
+  l'azione viene scritta nella tabella `journal`. Quando è finita, la riga
+  del journal viene tolta e la base aggiornata **nella stessa transazione**.
+  Se resta una riga, all'apertura l'app segnala l'operazione interrotta.
+- **Ripresa**: la base cambia solo per le azioni finite, quindi al giro
+  successivo il confronto ritrova le stesse differenze, meno quelle già
+  sistemate. Un'azione a metà si risolve da sola: un file già copiato ma non
+  registrato risulta "nuovo su entrambi con lo stesso checksum", un file già
+  cancellato su entrambi esce dalla base, e così via.
+- **Copie e rinomine a metà**: restano come `.hddraid-partial` o
+  `.hddraid-rename`, ignorati e sostituiti.
+- **Domande**: le risposte non si salvano. Una domanda senza risposta
+  ("Decido dopo") viene ricalcolata e riproposta al giro successivo.
 
 ## `Scarica HddRaid.html`
 

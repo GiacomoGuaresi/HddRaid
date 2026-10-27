@@ -3,6 +3,7 @@
 //! Non dipende dall'interfaccia: l'app Tauri si limita a chiamarlo.
 
 pub mod archive;
+pub mod check;
 pub mod copy;
 pub mod disk;
 pub mod error;
@@ -23,9 +24,10 @@ pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Data e ora attuali in UTC, in formato RFC 3339.
+/// Data e ora attuali in UTC, in formato RFC 3339 con i millisecondi. Il
+/// formato è fisso, quindi le date si possono confrontare come stringhe.
 pub fn now_rfc3339() -> String {
-    chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
+    chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
 }
 
 #[cfg(test)]

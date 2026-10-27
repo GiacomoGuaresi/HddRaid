@@ -64,11 +64,13 @@ cargo run -p hddraid-cli -- init dev-disks/disk-a dev-disks/disk-b
 cargo run -p hddraid-cli -- status dev-disks/disk-a dev-disks/disk-b
 cargo run -p hddraid-cli -- scan dev-disks/disk-a
 cargo run -p hddraid-cli -- sync dev-disks/disk-a dev-disks/disk-b
+cargo run -p hddraid-cli -- check dev-disks/disk-a dev-disks/disk-b --repair
 ```
 
 `sync` mostra il piano, chiede cosa fare per cancellazioni e conflitti
 (oppure `--answer delete|restore|keep-a|keep-b|both|skip` per tutte) e
-conferma prima di eseguire (`--yes` per saltare la conferma).
+conferma prima di eseguire (`--yes` per saltare la conferma). `check` fa il
+controllo completo; con `--repair` ripara i file rovinati dalla copia buona.
 
 Un giro completo:
 

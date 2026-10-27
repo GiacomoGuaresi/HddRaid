@@ -53,9 +53,9 @@ Legenda: ⬜ da fare · 🔄 in corso · ✅ fatto
 
 | # | Step | Commit | Stato |
 |---|---|---|---|
-| 3.1 | Verifica di tutti i file, lettura dei due dischi in parallelo, stima del tempo | `feat(check): full check` | ⬜ |
-| 3.2 | Ripresa dopo un'interruzione (`verified`) | `feat(check): resume` | ⬜ |
-| 3.3 | Riparazione dalla copia buona | `feat(check): repair` | ⬜ |
+| 3.1 | Verifica di tutti i file, lettura dei due dischi in parallelo, stima del tempo | `feat(check): full check` | ✅ |
+| 3.2 | Ripresa dopo un'interruzione (`verified`) | `feat(check): resume` | ✅ |
+| 3.3 | Riparazione dalla copia buona | `feat(check): repair` | ✅ |
 
 ## M4 — App → `v0.4.0`
 
