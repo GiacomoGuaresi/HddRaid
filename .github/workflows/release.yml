@@ -1,0 +1,84 @@
+name: Release
+
+# Un tag `v*` costruisce gli installer per i tre sistemi e li pubblica in una
+# release di GitHub. Si può anche lanciare a mano su un tag esistente.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag da pubblicare (es. v0.1.0)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Installer (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            args: ""
+          - name: macOS
+            os: macos-latest
+            # Un solo .dmg per Intel e Apple Silicon.
+            args: --target universal-apple-darwin
+          - name: Linux
+            os: ubuntu-22.04
+            args: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Dipendenze di sistema (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: app/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: app
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Firma ad hoc, gratuita: senza, su Apple Silicon l'app risulta
+          # "danneggiata". Vedi doc/stack.md.
+          APPLE_SIGNING_IDENTITY: "-"
+        with:
+          projectPath: app
+          tagName: ${{ inputs.tag || github.ref_name }}
+          releaseName: HddRaid ${{ inputs.tag || github.ref_name }}
+          releaseBody: |
+            Early build, for trying the app out. **Not yet tested on real multi-terabyte drives: do not trust it with your only copy of anything.**
+
+            The installers are not code-signed, so the system warns at first launch:
+
+            - **Windows**: SmartScreen shows "Windows protected your PC" → **More info → Run anyway**.
+            - **macOS**: the first launch is blocked → **System Settings → Privacy & Security → Open Anyway**.
+            - **Linux**: no warning.
+
+            See the [README](https://github.com/GiacomoGuaresi/HddRaid#readme) for what the app does and its current status.
+          prerelease: true
+          args: ${{ matrix.args }}
