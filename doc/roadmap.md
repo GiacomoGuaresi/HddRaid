@@ -75,8 +75,8 @@ Vedi [flussi](flussi.md).
 
 | # | Step | Commit | Stato |
 |---|---|---|---|
-| 5.1 | Primo avvio e **preparazione dei dischi**: adozione e controllo del file system | `feat(ui): prepare disks` | ⬜ |
-| 5.2 | **Formattazione** exFAT guidata sui tre sistemi | `feat(app): exfat formatting` | ⬜ |
+| 5.1 | Primo avvio e **preparazione dei dischi**: adozione e controllo del file system | `feat(ui): prepare disks` | 🔄 |
+| 5.2 | **Formattazione** exFAT guidata sui tre sistemi | `feat(app): exfat formatting` | ✅ |
 | 5.3 | **Sostituzione** di un disco rotto: disco nuovo formattato dal popup del disco | `feat(ui): replace disk` | ✅ |
 | 5.4 | `Scarica HddRaid.html` sui dischi | `feat(core): download link file` | ✅ |
 
@@ -84,7 +84,7 @@ Vedi [flussi](flussi.md).
 
 | # | Step | Commit | Stato |
 |---|---|---|---|
-| 6.1 | Installer per i tre sistemi in CI, firma ad hoc su macOS | `ci: release builds` | ⬜ |
+| 6.1 | Installer per i tre sistemi in CI, firma ad hoc su macOS | `ci: release builds` | ✅ |
 | 6.2 | Aggiornamenti automatici | `feat(app): auto update` | ⬜ |
 | 6.3 | Pagina di download con istruzioni illustrate | `docs: download page` | ⬜ |
 | 6.4 | Prova sul campo: migrazione dei miei dischi attuali | — | ⬜ |

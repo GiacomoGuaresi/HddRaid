@@ -25,22 +25,31 @@ no technical words, and nothing is ever deleted without asking.
 
 ## Status
 
-Version 0.1.0, not released yet.
+Version 0.1.0, an early pre-release: installers for Windows, macOS and Linux
+are on the [releases page](https://github.com/GiacomoGuaresi/HddRaid/releases).
 
 | Part | State |
 |---|---|
 | Sync engine (scan, three-way compare, safe copy, journal, full check with repair) | done, tested |
 | Desktop app (tray icon, autostart, drive detection, align, questions, full check, settings, history) | done |
-| Guided first-time setup and exFAT formatting on all three systems | in progress |
-| Installers, auto-update, download page | not started |
+| exFAT formatting on all three systems, replacing a dead drive | done |
+| Guided first-time setup | in progress |
+| Installers built by CI | done, not code-signed |
+| Auto-update, download page | not started |
 | Field test on my own drives | not started |
 
-There are no installers yet: to try it you build from source (below). The
-full plan is in the [roadmap](doc/roadmap.md).
+It has not yet run on real multi-terabyte drives: do not trust it with your
+only copy of anything. The full plan is in the [roadmap](doc/roadmap.md).
 
 ## Try it
 
-Requirements: [Rust](https://rustup.rs/) stable, Node.js 24 and
+**Install it.** Download the installer for your system from the
+[latest release](https://github.com/GiacomoGuaresi/HddRaid/releases). The
+installers are not code-signed, so the system warns at first launch: on
+Windows choose *More info → Run anyway*; on macOS open *System Settings →
+Privacy & Security → Open Anyway*.
+
+**Or build from source.** Requirements: [Rust](https://rustup.rs/) stable, Node.js 24 and
 [pnpm](https://pnpm.io/). On Linux also the Tauri dependencies
 (`libwebkit2gtk-4.1-dev`, `libappindicator3-dev`, `librsvg2-dev`).
 

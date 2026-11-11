@@ -25,22 +25,31 @@ pulsanti, nessuna parola tecnica, e niente viene cancellato senza chiedere.
 
 ## Stato
 
-Versione 0.1.0, non ancora rilasciata.
+Versione 0.1.0, una pre-release: gli installer per Windows, macOS e Linux
+sono nella [pagina delle release](https://github.com/GiacomoGuaresi/HddRaid/releases).
 
 | Parte | Stato |
 |---|---|
 | Motore (scansione, confronto a tre vie, copia sicura, journal, controllo completo con riparazione) | fatto, con test |
 | App desktop (icona nella barra, avvio automatico, rilevamento dei dischi, allineamento, domande, controllo completo, impostazioni, storico) | fatta |
-| Preparazione guidata dei dischi e formattazione exFAT sui tre sistemi | in corso |
-| Installer, aggiornamenti automatici, pagina di download | da fare |
+| Formattazione exFAT sui tre sistemi, sostituzione di un disco rotto | fatto |
+| Preparazione guidata al primo avvio | in corso |
+| Installer costruiti dalla CI | fatto, senza firma del codice |
+| Aggiornamenti automatici, pagina di download | da fare |
 | Prova sul campo con i miei dischi | da fare |
 
-Non ci sono ancora installer: per provarla si compila dai sorgenti (sotto). Il
-piano completo è nella [roadmap](doc/roadmap.md).
+Non ha ancora lavorato su dischi veri da qualche terabyte: non affidarle
+l'unica copia di qualcosa. Il piano completo è nella [roadmap](doc/roadmap.md).
 
 ## Provarla
 
-Servono [Rust](https://rustup.rs/) stabile, Node.js 24 e
+**Installarla.** Scarica l'installer per il tuo sistema dall'[ultima
+release](https://github.com/GiacomoGuaresi/HddRaid/releases). Gli installer
+non hanno la firma del codice, quindi al primo avvio il sistema avvisa: su
+Windows *Ulteriori informazioni → Esegui comunque*; su macOS *Impostazioni di
+Sistema → Privacy e sicurezza → Apri comunque*.
+
+**Oppure compilarla dai sorgenti.** Servono [Rust](https://rustup.rs/) stabile, Node.js 24 e
 [pnpm](https://pnpm.io/). Su Linux anche le dipendenze di Tauri
 (`libwebkit2gtk-4.1-dev`, `libappindicator3-dev`, `librsvg2-dev`).
 
