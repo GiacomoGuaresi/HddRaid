@@ -36,10 +36,10 @@ are on the [releases page](https://github.com/GiacomoGuaresi/HddRaid/releases).
 | Guided first-time setup | in progress |
 | Installers built by CI | done, not code-signed |
 | Auto-update, download page | not started |
-| Field test on my own drives | not started |
+| Use on my own drives | in use |
 
-It has not yet run on real multi-terabyte drives: do not trust it with your
-only copy of anything. The full plan is in the [roadmap](doc/roadmap.md).
+I use it on my own pair of drives. It is still an early pre-release with no
+other users yet: do not trust it with your only copy of anything. The full plan is in the [roadmap](doc/roadmap.md).
 
 ## Try it
 
@@ -159,7 +159,7 @@ tests, run by CI on Windows, macOS and Linux on every push.
 
 What is not covered: the interface has type checks and a translation check
 (Italian and English must have the same keys) but no automated UI tests, and
-the app has not yet been through a long run on real multi-terabyte drives.
+outside the tests the app has only run on my own pair of drives.
 
 ```sh
 cargo test --workspace

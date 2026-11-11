@@ -36,10 +36,10 @@ sono nella [pagina delle release](https://github.com/GiacomoGuaresi/HddRaid/rele
 | Preparazione guidata al primo avvio | in corso |
 | Installer costruiti dalla CI | fatto, senza firma del codice |
 | Aggiornamenti automatici, pagina di download | da fare |
-| Prova sul campo con i miei dischi | da fare |
+| Uso sui miei dischi | in uso |
 
-Non ha ancora lavorato su dischi veri da qualche terabyte: non affidarle
-l'unica copia di qualcosa. Il piano completo è nella [roadmap](doc/roadmap.md).
+La uso sulla mia coppia di dischi. Resta una pre-release iniziale, senza altri
+utenti per ora: non affidarle l'unica copia di qualcosa. Il piano completo è nella [roadmap](doc/roadmap.md).
 
 ## Provarla
 
@@ -163,8 +163,8 @@ Rust, eseguiti dalla CI su Windows, macOS e Linux a ogni push.
 
 Cosa non è coperto: l'interfaccia ha il controllo dei tipi e quello delle
 traduzioni (italiano e inglese devono avere le stesse chiavi) ma nessun test
-automatico, e l'app non ha ancora fatto un giro lungo su dischi veri da
-qualche terabyte.
+automatico, e fuori dai test l'app ha lavorato solo sulla mia coppia di
+dischi.
 
 ```sh
 cargo test --workspace

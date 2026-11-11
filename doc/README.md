@@ -11,8 +11,8 @@
 ## Da PhotoSaver
 
 HddRaid nasce da [PhotoSaver](https://github.com/GiacomoGuaresi/PhotoSaver),
-che non è mai arrivato in produzione perché faceva troppe cose (caricamento
-guidato, visualizzatore, miniature, mappa…).
+che fa molte più cose (caricamento guidato, visualizzatore, miniature,
+mappa…): HddRaid ne è la versione ridotta, per file di qualunque tipo.
 
 | Riprendiamo | Togliamo |
 |---|---|

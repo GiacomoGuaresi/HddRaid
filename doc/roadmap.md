@@ -87,7 +87,7 @@ Vedi [flussi](flussi.md).
 | 6.1 | Installer per i tre sistemi in CI, firma ad hoc su macOS | `ci: release builds` | ✅ |
 | 6.2 | Aggiornamenti automatici | `feat(app): auto update` | ⬜ |
 | 6.3 | Pagina di download con istruzioni illustrate | `docs: download page` | ⬜ |
-| 6.4 | Prova sul campo: migrazione dei miei dischi attuali | — | ⬜ |
+| 6.4 | Prova sul campo: migrazione dei miei dischi attuali | — | ✅ |
 
 ## Dopo
 
